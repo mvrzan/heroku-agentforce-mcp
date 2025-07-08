@@ -5,17 +5,32 @@
 <p/>
 <p/>
 
+# TODO Items
+
+- [x] MCP Overview
+- [ ] MCP Client
+  - [ ] methods
+  - [ ] security
+- [ ] MCP Server
+  - [ ] `stdio`
+  - [ ] `sse`
+  - [ ] files
+  - [ ] tools
+  - [ ] prompts
+
 # Exploring Model Context Protocol (MCP) with Heroku
 
-The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents.
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents.P
 
 # Table of Contents
 
+- [TODO Items](#todo-items)
 - [Exploring Model Context Protocol (MCP) with Heroku](#exploring-model-context-protocol-mcp-with-heroku)
 - [Table of Contents](#table-of-contents)
   - [What does it do?](#what-does-it-do)
-  - [How does it work?](#how-does-it-work)
-    - [Architecture diagram](#architecture-diagram)
+  - [Model Context Protocol Overview](#model-context-protocol-overview)
+    - [What Problem Does MCP Solve?](#what-problem-does-mcp-solve)
+    - [General MCP Architecture](#general-mcp-architecture)
 - [License](#license)
 - [Disclaimer](#disclaimer)
 
@@ -25,11 +40,21 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 
 The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents.
 
-## How does it work?
+## Model Context Protocol Overview
 
-### Architecture diagram
+The Model Context Protocol (MCP) is an open standard designed to define how applications communicate and provide context to LLMs. MCP provides a structured way to exchange context, instructions, and results, enabling interoperability across different platforms and model providers.
 
-![](./screenshots/agentforce-architecture-diagram.png)
+### What Problem Does MCP Solve?
+
+MCP transforms how you can build AI Agents in a standardized way across various systems. Each AI service has its own way of:
+
+- Sharing context and data
+- Invoking tools and functions
+- Passing messages back and forth
+
+The role of MCP is to standardize how this is done so that the development work for one AI service can be easily reused by a different AI service. Otherwise, the same functionality would have to be custom coded for each AI service separately.
+
+### General MCP Architecture
 
 # License
 
