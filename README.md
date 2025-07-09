@@ -14,6 +14,7 @@
 - [ ] MCP Server
   - [ ] `stdio`
   - [ ] `sse`
+  - [ ] Streamable HTTP
   - [ ] files
   - [ ] tools
   - [ ] prompts
@@ -42,7 +43,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 
 ## Model Context Protocol Overview
 
-The Model Context Protocol (MCP) is an open standard designed to define how applications communicate and provide context to LLMs. MCP provides a structured way to exchange context, instructions, and results, enabling interoperability across different platforms and model providers.
+The Model Context Protocol (MCP) is an [open standard](https://github.com/modelcontextprotocol) designed to define how applications communicate and provide context to LLMs. MCP provides a structured way to exchange context, instructions, and results, enabling interoperability across different platforms and model providers.
 
 ### What Problem Does MCP Solve?
 
@@ -55,6 +56,8 @@ MCP transforms how you can build AI Agents in a standardized way across various 
 The role of MCP is to standardize how this is done so that the development work for one AI service can be easily reused by a different AI service. Otherwise, the same functionality would have to be custom coded for each AI service separately.
 
 ### General MCP Architecture
+
+![](./screenshots/general-mcp-architecture.png)
 
 # License
 
