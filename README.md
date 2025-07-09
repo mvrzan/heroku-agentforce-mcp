@@ -59,6 +59,22 @@ The role of MCP is to standardize how this is done so that the development work 
 
 ![](./screenshots/general-mcp-architecture.png)
 
+The diagram illustrates a general MCP architecture of how various applications on a user's machine interact with different AI backends through the Model Context Protocol.
+
+On the **User Machine/Laptop**, different applications have a built-in **MCP Client**. That includes the following:
+
+- **Claude Desktop**
+- **CLI (Command-Line Interface)**
+- **Cursor**
+
+Each one of these applications has its own MCP client, but for the sake of the diagram, it is a single MCP client box. The MCP Client can communicate with various **MCP Servers**, each with a different hosting environment and purpose. The diagram showcases three examples, demonstrating the protocol's flexibility:
+
+1.  **MCP Server A (local)**: A server running on the user's machine that can access **Local data**. It communicates with the MCP Client using the `stdio` transport. This sever can also access 3rd party data via API calls.
+2.  **MCP Server B (AWS)**: A cloud-hosted server on AWS that connects to a **3rd party service B** via API calls. It uses Server-Sent Events (**SSE**) for communication, which is noted as a [deprecated method](https://modelcontextprotocol.io/docs/concepts/transports#server-sent-events-sse-deprecated).
+3.  **MCP Server C (Heroku)**: Another cloud-hosted server on Heroku, which integrates with a **3rd party service A** and uses **Streamable HTTP** to communicate with the client.
+
+This architecture allows any of the client applications (Cursor, CLI, etc.) to connect to any of the backend servers (local, AWS, or Heroku) through the MCP Client, without needing to know the specific details of each server's implementation.
+
 # License
 
 [MIT](http://www.opensource.org/licenses/mit-license.html)
