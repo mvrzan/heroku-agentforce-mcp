@@ -175,6 +175,10 @@ When you make changes to your code, the server will automatically restart to fet
 
 ## Project 4: Agentforce and Heroku MCP Servicer (native Agentforce MCP client)
 
+🚧 **Work in progress** 🚧
+
+At the time of creating this repository, the native Agentforce MCP client was not globally available.
+
 # License
 
 [MIT](http://www.opensource.org/licenses/mit-license.html)
