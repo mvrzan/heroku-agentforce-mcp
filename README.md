@@ -18,6 +18,8 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
     - [What Problem Does MCP Solve?](#what-problem-does-mcp-solve)
     - [General MCP Architecture](#general-mcp-architecture)
   - [Project 1: Local MCP Client and Server](#project-1-local-mcp-client-and-server)
+    - [Technologies used](#technologies-used)
+    - [Configuration](#configuration)
 - [License](#license)
 - [Disclaimer](#disclaimer)
 
@@ -81,6 +83,25 @@ The architecture diagram shows the following:
 6.  **CLI Output**: The LLM's response is returned to the CLI, which then displays the final output to the user.
 
 This setup demonstrates a sophisticated MCP interaction, showcasing how a single client can orchestrate communication across multiple, diverse servers to provide rich context to an LLM.
+
+### Technologies used
+
+**Client**
+
+- [Node.js](https://nodejs.org/en)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Express](https://expressjs.com/)
+- [Anthropic TypeScript API Library](https://github.com/anthropics/anthropic-sdk-typescript)
+- [Model Context Protocol](https://github.com/modelcontextprotocol/typescript-sdk)
+
+**Server**
+
+- [Node.js](https://nodejs.org/en)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Express](https://expressjs.com/)
+- [Model Context Protocol](https://github.com/modelcontextprotocol/typescript-sdk)
+
+### Configuration
 
 # License
 
