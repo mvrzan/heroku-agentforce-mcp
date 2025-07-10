@@ -64,11 +64,23 @@ to know the specific details of each server's implementation.
 
 ## Project 1: Local MCP Client and Server
 
-![](./screenshots/general-mcp-architecture.png)
+![](./screenshots/project-1-local-mcp-architecture.png)
 
-This project showcases how to have an MCP Client and Server running on your local machine.
+This project showcases how to run an MCP Client and Server on your local machine, built with **Node.js**, **TypeScript**, and the **Anthropic SDK**. The architecture involves a single MCP client that communicates with three different MCP servers, each with a unique transport mechanism and purpose.
 
-The MCP
+The architecture diagram shows the following:
+
+1.  **CLI Invocation**: The process starts when a user invokes a command through the **Command-Line Interface (CLI)**.
+2.  **MCP Client (TypeScript)**: The CLI interacts with an **MCP Client** (implemented in TypeScript) to gather context from various sources.
+3.  **Server Communication**: The client is configured to connect to three different servers to fetch context:
+    - **Local Server**: Communicates over `stdio` to access local data (`data.json`) and a prompt.
+    - **External Server 1**: Uses `Streamable HTTP` to connect with a remote service.
+    - **External Server 2**: Uses `Server-Sent Events (SSE)`, a deprecated transport method, to communicate with another external service.
+4.  **Context Provisioning**: The MCP Client takes the payload from the MCP servers and passes it to the LLM as context.
+5.  **LLM Processing**: The LLM (invoked via the Anthropic SDK) processes the user's request using the context provided by the MCP Client.
+6.  **CLI Output**: The LLM's response is returned to the CLI, which then displays the final output to the user.
+
+This setup demonstrates a sophisticated MCP interaction, showcasing how a single client can orchestrate communication across multiple, diverse servers to provide rich context to an LLM.
 
 # License
 
