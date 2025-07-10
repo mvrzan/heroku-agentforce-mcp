@@ -23,7 +23,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
       - [Requirements](#requirements)
       - [Setup](#setup)
           - [Local environment configuration](#local-environment-configuration)
-      - [Development](#development)
+        - [Development](#development)
 - [License](#license)
 - [Disclaimer](#disclaimer)
 
@@ -153,7 +153,7 @@ ANTHROPIC_API_KEY=
 
 Once all of this is done, you are ready to run the application locally!
 
-#### Development
+##### Development
 
 To run the application locally, use the command line, navigate to the `client` folder, ensure the dependencies are installed properly, and run the following:
 
