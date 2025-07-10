@@ -24,6 +24,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
       - [Setup](#setup)
           - [Local environment configuration](#local-environment-configuration)
         - [Development](#development)
+  - [Project 2: Local MCP Client and Heroku MCP Server](#project-2-local-mcp-client-and-heroku-mcp-server)
 - [License](#license)
 - [Disclaimer](#disclaimer)
 
@@ -165,6 +166,8 @@ npm run dev
 This will automatically run the Node script and you will be able to write prompts directly in your Command Line Interface.
 
 When you make changes to your code, the server will automatically restart to fetch new changes.
+
+## Project 2: Local MCP Client and Heroku MCP Server
 
 # License
 
