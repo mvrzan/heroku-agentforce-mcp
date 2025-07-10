@@ -16,11 +16,11 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.56.0",
     "@modelcontextprotocol/sdk": "^1.15.0",
-    "dotenv": "^17.1.0",
+    "dotenv": "^17.2.0",
     "tsx": "^4.20.3"
   },
   "devDependencies": {
-    "@types/node": "^24.0.10",
+    "@types/node": "^24.0.12",
     "typescript": "^5.8.3"
   }
 }
