@@ -64,7 +64,7 @@ to know the specific details of each server's implementation.
 
 ## Project 1: Local MCP Client and Server
 
-![](./screenshots/project-1-local-mcp-architecture.png)
+![](./screenshots/project-1-architecture-diagram.png)
 
 This project showcases how to run an MCP Client and Server on your local machine, built with **Node.js**, **TypeScript**, and the **Anthropic SDK**. The architecture involves a single MCP client that communicates with three different MCP servers, each with a unique transport mechanism and purpose.
 
