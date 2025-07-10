@@ -20,6 +20,10 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
   - [Project 1: Local MCP Client and Server](#project-1-local-mcp-client-and-server)
     - [Technologies used](#technologies-used)
     - [Configuration](#configuration)
+      - [Requirements](#requirements)
+      - [Setup](#setup)
+          - [Local environment configuration](#local-environment-configuration)
+      - [Development](#development)
 - [License](#license)
 - [Disclaimer](#disclaimer)
 
@@ -102,6 +106,65 @@ This setup demonstrates a sophisticated MCP interaction, showcasing how a single
 - [Model Context Protocol](https://github.com/modelcontextprotocol/typescript-sdk)
 
 ### Configuration
+
+#### Requirements
+
+To run this application locally, you will need the following:
+
+- An Anthropic [account](https://www.anthropic.com/) with a paid subscription to get an API key
+- Node.js version 20 or later installed (type `node -v` in your terminal to check). Follow [instructions](https://nodejs.org/en/download) if you don't have node installed
+- npm version 10.0.0 or later installed (type `npm -v` in your terminal to check). Node.js includes `npm`
+- git installed. Follow the instructions to [install git](https://git-scm.com/downloads)
+
+#### Setup
+
+###### Local environment configuration
+
+The first step is to clone the repository and install the project dependencies for both server and client folders via a terminal interface by running the `npm install` in the proper folder:
+
+Client:
+
+```
+cd heroku-mcp/project_1/client
+npm install
+```
+
+Server:
+
+```
+cd heroku-mcp/project_1/server
+npm install
+```
+
+The second step is to create a `.env` file in the client folder. Find the `.env.example` file, copy it and rename it to `.env`.
+
+Client:
+
+```
+cd heroku-mcp/project_1/client
+cp .env.example .env
+```
+
+Edit the newly created `.env` file and update the variable with your Anthropic account API key information:
+
+```
+ANTHROPIC_API_KEY=
+```
+
+Once all of this is done, you are ready to run the application locally!
+
+#### Development
+
+To run the application locally, use the command line, navigate to the `client` folder, ensure the dependencies are installed properly, and run the following:
+
+```
+cd heroku-mcp/project_1/client
+npm run dev
+```
+
+This will automatically run the Node script and you will be able to write prompts directly in your Command Line Interface.
+
+When you make changes to your code, the server will automatically restart to fetch new changes.
 
 # License
 
