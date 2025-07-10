@@ -25,6 +25,8 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
           - [Local environment configuration](#local-environment-configuration)
         - [Development](#development)
   - [Project 2: Local MCP Client and Heroku MCP Server](#project-2-local-mcp-client-and-heroku-mcp-server)
+  - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
+  - [Project 4: Agentforce and Heroku MCP Servicer (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-servicer-native-agentforce-mcp-client)
 - [License](#license)
 - [Disclaimer](#disclaimer)
 
@@ -168,6 +170,10 @@ This will automatically run the Node script and you will be able to write prompt
 When you make changes to your code, the server will automatically restart to fetch new changes.
 
 ## Project 2: Local MCP Client and Heroku MCP Server
+
+## Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)
+
+## Project 4: Agentforce and Heroku MCP Servicer (native Agentforce MCP client)
 
 # License
 
