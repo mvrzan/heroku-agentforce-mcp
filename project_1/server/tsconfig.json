@@ -3,7 +3,7 @@
     "target": "ES2022",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "outDir": "src/build",
+    "outDir": "build",
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
