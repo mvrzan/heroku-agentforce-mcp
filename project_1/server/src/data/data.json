@@ -1,0 +1,206 @@
+{
+  "climateChange": {
+    "usTemperatureRise": {
+      "1900": 0,
+      "1950": 0.2,
+      "1975": 0.6,
+      "2000": 1.2,
+      "2025": 2.1
+    },
+    "seaLevelRise": {
+      "1900": 0,
+      "1950": 3.2,
+      "1975": 7.5,
+      "2000": 12.8,
+      "2025": 21.4
+    },
+    "arcticIceDecline": {
+      "1980": 8.12,
+      "1990": 7.85,
+      "2000": 7.21,
+      "2010": 6.32,
+      "2020": 5.48,
+      "2025": 5.12
+    }
+  },
+  "extremeWeatherEvents": [
+    {
+      "id": "katrina-2005",
+      "name": "Hurricane Katrina",
+      "type": "Hurricane",
+      "date": "2005-08-29",
+      "location": "Gulf Coast",
+      "impactedStates": ["LA", "MS", "AL", "FL"],
+      "casualties": 1833,
+      "damageBillionsUSD": 125,
+      "maxWindSpeed": 175,
+      "minPressure": 920,
+      "description": "One of the deadliest and costliest hurricanes in US history, causing catastrophic flooding in New Orleans."
+    },
+    {
+      "id": "sandy-2012",
+      "name": "Hurricane Sandy",
+      "type": "Post-Tropical Cyclone",
+      "date": "2012-10-29",
+      "location": "Eastern Seaboard",
+      "impactedStates": ["NY", "NJ", "CT", "RI", "MA"],
+      "casualties": 233,
+      "damageBillionsUSD": 70,
+      "maxWindSpeed": 115,
+      "minPressure": 940,
+      "description": "Second-costliest hurricane in US history at the time, causing extensive damage to the Northeast."
+    },
+    {
+      "id": "harvey-2017",
+      "name": "Hurricane Harvey",
+      "type": "Hurricane",
+      "date": "2017-08-25",
+      "location": "Texas Gulf Coast",
+      "impactedStates": ["TX", "LA"],
+      "casualties": 103,
+      "damageBillionsUSD": 125,
+      "maxWindSpeed": 130,
+      "minPressure": 937,
+      "description": "Caused catastrophic flooding in Houston metropolitan area with over 40 inches of rain in some areas."
+    }
+  ],
+  "droughtHistory": {
+    "dustBowl": {
+      "period": "1934-1939",
+      "affectedStates": ["OK", "TX", "NM", "CO", "KS"],
+      "economicImpactBillionsUSD": 50,
+      "displacedPopulation": 2500000,
+      "maxPalmerIndex": -6.0
+    },
+    "california2011": {
+      "period": "2011-2017",
+      "affectedStates": ["CA", "OR", "NV"],
+      "economicImpactBillionsUSD": 3.8,
+      "reservoirDeclinePercent": 47,
+      "maxPalmerIndex": -4.5
+    },
+    "southwest2020": {
+      "period": "2020-2024",
+      "affectedStates": ["AZ", "NM", "UT", "CO"],
+      "economicImpactBillionsUSD": 5.2,
+      "reservoirDeclinePercent": 38,
+      "maxPalmerIndex": -4.2
+    }
+  },
+  "weatherSensitiveSectors": {
+    "agriculture": {
+      "gdpContributionPercent": 5.2,
+      "weatherRelatedLossesPerYear": 12.6,
+      "cropInsurancePayoutsBillions": 8.3,
+      "mostVulnerableCrops": ["corn", "soybeans", "cotton", "wheat"],
+      "irrigationRequirementChanges": {
+        "midwest": 1.12,
+        "southwest": 1.32,
+        "southeast": 1.08,
+        "northwest": 0.97
+      }
+    },
+    "energy": {
+      "temperatureImpactOnDemandPercent": 5.8,
+      "extremeWeatherOutages": {
+        "2010": 178,
+        "2015": 205,
+        "2020": 258,
+        "2025": 287
+      },
+      "renewableWeatherDependency": {
+        "solar": 0.92,
+        "wind": 0.87,
+        "hydro": 0.78
+      }
+    },
+    "transportation": {
+      "weatherDelaysCostBillions": 9.7,
+      "airportClosuresPerYear": {
+        "snow": 243,
+        "fog": 186,
+        "thunderstorms": 127,
+        "hurricanes": 18
+      },
+      "roadSaltUsageByState": {
+        "NY": 1.2,
+        "MI": 0.87,
+        "OH": 0.92,
+        "IL": 0.85,
+        "PA": 0.93
+      }
+    }
+  },
+  "historicalClimateByRegion": {
+    "pacific": {
+      "averageTemperature": {
+        "1900-1950": 58.2,
+        "1951-2000": 59.7,
+        "2001-2025": 61.5
+      },
+      "averageRainfall": {
+        "1900-1950": 28.4,
+        "1951-2000": 27.3,
+        "2001-2025": 25.9
+      },
+      "extremeEventFrequency": {
+        "1900-1950": 4.2,
+        "1951-2000": 5.8,
+        "2001-2025": 8.7
+      }
+    },
+    "northeast": {
+      "averageTemperature": {
+        "1900-1950": 47.9,
+        "1951-2000": 49.1,
+        "2001-2025": 51.3
+      },
+      "averageRainfall": {
+        "1900-1950": 42.6,
+        "1951-2000": 44.2,
+        "2001-2025": 46.8
+      },
+      "extremeEventFrequency": {
+        "1900-1950": 3.7,
+        "1951-2000": 4.9,
+        "2001-2025": 7.6
+      }
+    },
+    "southeast": {
+      "averageTemperature": {
+        "1900-1950": 63.4,
+        "1951-2000": 64.2,
+        "2001-2025": 66.1
+      },
+      "averageRainfall": {
+        "1900-1950": 52.8,
+        "1951-2000": 51.9,
+        "2001-2025": 53.7
+      },
+      "extremeEventFrequency": {
+        "1900-1950": 6.8,
+        "1951-2000": 8.2,
+        "2001-2025": 12.4
+      }
+    },
+    "midwest": {
+      "averageTemperature": {
+        "1900-1950": 49.2,
+        "1951-2000": 50.5,
+        "2001-2025": 52.3
+      },
+      "averageRainfall": {
+        "1900-1950": 37.4,
+        "1951-2000": 38.9,
+        "2001-2025": 40.2
+      },
+      "extremeEventFrequency": {
+        "1900-1950": 5.4,
+        "1951-2000": 6.7,
+        "2001-2025": 9.8
+      }
+    }
+  },
+  "lastUpdated": "2025-07-11T08:45:00Z",
+  "dataSource": "US National Climate Assessment Compiled Data"
+}
