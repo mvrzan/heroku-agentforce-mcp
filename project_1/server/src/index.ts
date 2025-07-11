@@ -1,6 +1,10 @@
+import fs from "fs";
+import path from "path";
+import { z } from "zod";
+import { fileURLToPath } from "url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+import { getCurrentTimestamp } from "./utils/loggingUtil.js";
 
 import {
   AlertsResponse,
@@ -13,6 +17,9 @@ import {
 
 const NWS_API_BASE = "https://api.weather.gov";
 
+// Get current directory for relative path resolution
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 // Create server instance
 const server = new McpServer({
   name: "weather",
@@ -23,7 +30,8 @@ const server = new McpServer({
   },
 });
 
-// Register weather tools
+console.error(`${getCurrentTimestamp()} - 📝 server index - Registering tools...`);
+
 server.tool(
   "get-alerts",
   "Get weather alerts for a state",
@@ -80,7 +88,6 @@ server.tool(
     longitude: z.number().min(-180).max(180).describe("Longitude of the location"),
   },
   async ({ latitude, longitude }) => {
-    // Get grid point data
     const pointsUrl = `${NWS_API_BASE}/points/${latitude.toFixed(4)},${longitude.toFixed(4)}`;
     const pointsData = await makeNWSRequest<PointsResponse>(pointsUrl);
 
@@ -156,13 +163,65 @@ server.tool(
   }
 );
 
+console.error(`${getCurrentTimestamp()} - 📝 server index - Registering resources...`);
+
+// register local resources/files
+server.registerResource(
+  "weather-data",
+  "file:///data.json",
+  {
+    title: "Weather and Climate Data",
+    description: "Comprehensive weather and climate change dataset",
+    mimeType: "application/json",
+  },
+  async (uri) => {
+    try {
+      const filePath = path.resolve(__dirname, "..", "src", "data", "data.json");
+      console.error(`${getCurrentTimestamp()} - 🔍 server index - Looking for data file at: ${filePath}`);
+
+      if (!fs.existsSync(filePath)) {
+        console.error(`${getCurrentTimestamp()} - ❌ server index - File not found: ${filePath}`);
+        throw new Error(`Resource not found: ${uri.href}`);
+      }
+
+      // Read JSON content
+      const content = fs.readFileSync(filePath, "utf-8");
+      console.error(
+        `${getCurrentTimestamp()} - ✅ server index - Successfully read JSON data (${content.length} bytes)`
+      );
+
+      // Return the content properly formatted according to MCP protocol
+      return {
+        contents: [
+          {
+            title: "Weather and Climate Data",
+            description: "Comprehensive weather and climate change dataset",
+            uri: uri.href,
+            text: content,
+            mimeType: "application/json",
+          },
+        ],
+      };
+    } catch (error) {
+      console.error(`${getCurrentTimestamp()} - ❌ server index - Error reading resource: ${error}`);
+      throw new Error(`Failed to read resource: ${uri.href}`);
+    }
+  }
+);
+
+console.error(`${getCurrentTimestamp()} - ✅ server index - Resource registration completed!`);
+
 async function main() {
   try {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error("Weather MCP Server running on stdio");
+
+    console.error(`${getCurrentTimestamp()} - 🏃 server index - Weather MCP Server running on stdio!`);
   } catch (error) {
-    console.error("Fatal error in main():", error);
+    console.error(
+      `${getCurrentTimestamp()} - ❌ server index - Error occurred when trying to start the MCP Server!`,
+      error
+    );
     process.exit(1);
   }
 }
