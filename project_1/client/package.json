@@ -7,7 +7,8 @@
     "dev": "tsx src/index.ts ../server/build/index.js",
     "watch": "tsc --watch",
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
-    "inspector": "npx @modelcontextprotocol/inspector node build/index.js"
+    "inspector": "npx @modelcontextprotocol/inspector node build/index.js",
+    "test": "tsx src/testServer.ts ../server/build/index.js"
   },
   "keywords": [],
   "author": "",
