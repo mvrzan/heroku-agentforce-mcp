@@ -5,6 +5,7 @@ import { Anthropic } from "@anthropic-ai/sdk";
 import { MessageParam, Tool } from "@anthropic-ai/sdk/resources/messages/messages.mjs";
 import readline from "readline/promises";
 import { getCurrentTimestamp } from "./loggingUtil.js";
+import { WeatherDataset } from "./types.js";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -19,7 +20,6 @@ export class MCPClient {
   private tools: Tool[] = [];
 
   constructor() {
-    // Initialize Anthropic client and MCP client
     this.anthropic = new Anthropic({
       apiKey: ANTHROPIC_API_KEY,
     });
@@ -27,11 +27,6 @@ export class MCPClient {
   }
 
   async connectToServer(serverScriptPath: string) {
-    /**
-     * Connect to an MCP server
-     *
-     * @param serverScriptPath - Path to the server script (.py or .js)
-     */
     try {
       const isUrl = serverScriptPath.startsWith("http://") || serverScriptPath.startsWith("https://");
       if (isUrl) {
@@ -91,7 +86,7 @@ export class MCPClient {
      * @returns Processed response as a string
      */
     const weatherKeywords = ["weather", "climate", "temperature", "forecast", "climate change", "dataset"];
-    let weatherData: any = null;
+    let weatherData: WeatherDataset;
     let weatherInfo = "";
 
     // Initialize messages array for Claude API
