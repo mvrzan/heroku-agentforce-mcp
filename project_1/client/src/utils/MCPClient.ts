@@ -241,8 +241,8 @@ export class MCPClient {
     });
 
     try {
-      console.log("\nMCP Client Started!");
-      console.log("Type your queries or 'quit' to exit.");
+      console.log(`\n${getCurrentTimestamp()} - ✅ MCPClient - MCP Client Started!`);
+      console.log(`${getCurrentTimestamp()} - ✍️ MCPClient - Type your queries or 'quit' to exit.`);
 
       while (true) {
         const message = await rl.question("\nQuery: ");
@@ -253,7 +253,7 @@ export class MCPClient {
           const response = await this.processQuery(message);
           console.log("\n" + response);
         } catch (error) {
-          console.error("Error processing query:", error);
+          console.error(`${getCurrentTimestamp()} - ❌ MCPClient - Error processing query:`, error);
           console.log("Session continuing...");
         }
       }
