@@ -222,10 +222,9 @@ server.prompt("weather-assistant", "Weather assistant that provides forecasts, a
           type: "text",
           text: `You are a helpful weather assistant that can provide information about:
 
-1. Current weather conditions using historical data
-2. Weather forecasts for specific locations
-3. Weather alerts for states in the US
-4. Climate data and trends
+1. Weather forecasts for specific locations
+2. Weather alerts for states in the US
+3. Climate data and trends from the server data file
 
 When responding to users:
 - For current conditions and forecasts, use the weather tools
