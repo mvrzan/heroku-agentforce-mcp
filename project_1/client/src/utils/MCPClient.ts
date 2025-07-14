@@ -29,6 +29,7 @@ export class MCPClient {
   async connectToServer(serverScriptPath: string) {
     try {
       const isUrl = serverScriptPath.startsWith("http://") || serverScriptPath.startsWith("https://");
+
       if (isUrl) {
         // Use SSE transport for remote MCP server
         this.transport = new SSEClientTransport(new URL(serverScriptPath));
@@ -58,19 +59,17 @@ export class MCPClient {
         };
       });
       console.log(
-        "Connected to server with tools:",
+        `${getCurrentTimestamp()} - 🔌 MCPClient - Connected to server with tools:`,
         this.tools.map(({ name }) => name)
       );
 
       // Check for available resources
-      try {
-        const resources = await this.mcp.listResources();
-        if (resources.resources && resources.resources.length > 0) {
-          console.log("Available resources:", resources.resources.map((r) => r.name).join(", "));
-        }
-      } catch (error) {
-        // Just log the error but don't fail the connection
-        console.log("Could not list resources:", error instanceof Error ? error.message : String(error));
+      const resources = await this.mcp.listResources();
+      if (resources.resources && resources.resources.length > 0) {
+        console.log(
+          `${getCurrentTimestamp()} - 🧰 MCPClient - Available resources:`,
+          resources.resources.map((resource) => resource.name).join(", ")
+        );
       }
     } catch (e) {
       console.log("Failed to connect to MCP server: ", e);
@@ -239,9 +238,6 @@ export class MCPClient {
   }
 
   async chatLoop() {
-    /**
-     * Run an interactive chat loop
-     */
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -270,9 +266,6 @@ export class MCPClient {
   }
 
   async cleanup() {
-    /**
-     * Clean up resources
-     */
     await this.mcp.close();
   }
 }
