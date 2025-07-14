@@ -63,7 +63,7 @@ On the **User Machine/Laptop**, different applications have a built-in **MCP Cli
 - **CLI (Command-Line Interface)**
 - **Cursor**
 
-Each one of these applications has its own MCP client, but for the sake of the diagram, it is a single MCP client box. The MCP Client can communicate with various **MCP Servers**, each with a different hosting environment and purpose. The diagram showcases three examples, demonstrating the protocol's flexibility:
+Each one of these applications has its own MCP client, but for the sake of the diagram, it is a single MCP client box. The MCP Clients can communicate with various **MCP Servers**, each with a different hosting environment and purpose. The diagram showcases three examples, demonstrating the protocol's flexibility:
 
 1.  **MCP Server A (local)**: A server running on the user's machine that can access **Local data**. It communicates with the MCP Client using the `stdio` transport. This server is accessing 3rd party service data, local data, and prompt information.
 2.  **MCP Server B (AWS)**: A cloud-hosted server on AWS that connects to a **3rd party service B** via API calls. It uses `Server-Sent Events (SSE)` for communication, which is noted as a [deprecated method](https://modelcontextprotocol.io/docs/concepts/transports#server-sent-events-sse-deprecated).
@@ -153,7 +153,10 @@ Edit the newly created `.env` file and update the variable with your Anthropic a
 
 ```
 ANTHROPIC_API_KEY=
+ANTHROPIC_CLAUDE_MODEL=claude-3-5-sonnet-20241022
 ```
+
+> The ANTHROPIC_CLAUDE_MODEL=claude-3-5-sonnet-20241022 value is already set, to the Claude 3.5 model, but you are welcome to change it.
 
 Once all of this is done, you are ready to run the application locally!
 
