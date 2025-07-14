@@ -91,12 +91,55 @@ export class MCPClient {
     let weatherInfo = "";
 
     // Initialize messages array for Claude API
-    const messages: MessageParam[] = [
-      {
-        role: "user",
-        content: query,
-      },
-    ];
+    const messages: MessageParam[] = [];
+
+    // First, try to fetch the prompt from MCP server to use as system prompt
+    try {
+      console.log(`${getCurrentTimestamp()} - 🔍 MCPClient - Discovering available prompts...`);
+
+      // Get list of available prompts
+      const promptsList = await this.mcp.listPrompts();
+
+      if (promptsList.prompts && promptsList.prompts.length > 0) {
+        console.log(`${getCurrentTimestamp()} - ✅ MCPClient - Found ${promptsList.prompts.length} prompts`);
+
+        // Find the weather assistant prompt
+        const weatherPrompt = promptsList.prompts.find(
+          (p) => p.name === "weather-assistant" || (p.description && p.description.toLowerCase().includes("weather"))
+        );
+
+        if (weatherPrompt) {
+          console.log(`${getCurrentTimestamp()} - 📋 MCPClient - Found weather prompt: ${weatherPrompt.name}`);
+
+          // Get the specific prompt content
+          const promptResponse = await this.mcp.getPrompt({ name: weatherPrompt.name });
+
+          if (promptResponse && promptResponse.messages) {
+            console.log(
+              `${getCurrentTimestamp()} - 📚 MCPClient - Successfully retrieved prompt with ${
+                promptResponse.messages.length
+              } messages`
+            );
+
+            // Add the prompt messages first, then add the user query
+            for (const promptMessage of promptResponse.messages) {
+              messages.push({
+                role: promptMessage.role as "user" | "assistant", // Ensure correct type
+                content: promptMessage.content.type === "text" ? promptMessage.content.text : "",
+              });
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`${getCurrentTimestamp()} - ⚠️ MCPClient - Failed to load prompt:`, error);
+    }
+
+    // Add user query after any prompt messages
+    messages.push({
+      role: "user",
+      content: query,
+    });
 
     // Check if query is related to weather data
     if (weatherKeywords.some((keyword) => query.toLowerCase().includes(keyword))) {
@@ -125,8 +168,9 @@ export class MCPClient {
           );
           // We'll leave the original query intact so Claude can choose to use the tools
 
-          // Add a system note about available tools
-          messages[0].content = `${query}\n\n(Note: You have access to weather tools that can provide real-time forecasts and alerts. Use them if the query requires current weather information.)`;
+          // Update message with tools note
+          const messageContent = messages[0].content;
+          messages[0].content = `${messageContent}\n\n(Note: You have access to weather tools that can provide real-time forecasts and alerts. Use them if the query requires current weather information.)`;
         }
         // Otherwise, check for historical/static weather data
         else if (resources.resources && resources.resources.length > 0) {
@@ -153,7 +197,8 @@ export class MCPClient {
                 }
 
                 // Add the relevant weather data to Claude's context
-                messages[0].content = `${query}\n\nHere's the available historical weather data from the server:\n${weatherInfo}\n\nFull weather data JSON:\n${JSON.stringify(
+                const messageContent = messages[0].content;
+                messages[0].content = `${messageContent}\n\nHere's the available historical weather data from the server:\n${weatherInfo}\n\nFull weather data JSON:\n${JSON.stringify(
                   weatherData,
                   null,
                   2
