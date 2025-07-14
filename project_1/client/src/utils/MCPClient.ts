@@ -35,15 +35,12 @@ export class MCPClient {
         this.transport = new SSEClientTransport(new URL(serverScriptPath));
         this.mcp.connect(this.transport);
       } else {
-        // Determine script type and appropriate command
-        const isJs = serverScriptPath.endsWith(".js");
-        const isPy = serverScriptPath.endsWith(".py");
-        if (!isJs && !isPy) {
-          throw new Error("Server script must be a .js or .py file or a valid URL");
+        if (!serverScriptPath.endsWith(".js")) {
+          throw new Error("Server script must be a .js file or a valid URL");
         }
-        const command = isPy ? (process.platform === "win32" ? "python" : "python3") : process.execPath;
+
         this.transport = new StdioClientTransport({
-          command,
+          command: process.execPath,
           args: [serverScriptPath],
         });
         this.mcp.connect(this.transport);
@@ -71,9 +68,9 @@ export class MCPClient {
           resources.resources.map((resource) => resource.name).join(", ")
         );
       }
-    } catch (e) {
-      console.log("Failed to connect to MCP server: ", e);
-      throw e;
+    } catch (error) {
+      console.error(`${getCurrentTimestamp()} - ❌ MCPClient - Failed to connect to MCP server:`, error);
+      throw error;
     }
   }
 
