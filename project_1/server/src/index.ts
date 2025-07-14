@@ -27,6 +27,7 @@ const server = new McpServer({
   capabilities: {
     resources: {},
     tools: {},
+    prompts: {},
   },
 });
 
@@ -208,6 +209,42 @@ server.registerResource(
     }
   }
 );
+
+// Register weather prompt
+console.error(`${getCurrentTimestamp()} - 📝 server index - Registering prompts...`);
+
+server.prompt("weather-assistant", "Weather assistant that provides forecasts, alerts, and climate data", async () => {
+  return {
+    messages: [
+      {
+        role: "assistant",
+        content: {
+          type: "text",
+          text: `You are a helpful weather assistant that can provide information about:
+
+1. Current weather conditions using historical data
+2. Weather forecasts for specific locations
+3. Weather alerts for states in the US
+4. Climate data and trends
+
+When responding to users:
+- For current conditions and forecasts, use the weather tools
+- For historical climate data, reference the weather-data resource
+- Use a friendly, conversational tone
+- Always include relevant temperature units (F/C)
+- Format alerts and warnings prominently
+- If location is ambiguous, ask for clarification
+
+Remember to format your responses clearly with appropriate sections for readability.`,
+        },
+      },
+    ],
+  };
+});
+
+console.error(`${getCurrentTimestamp()} - ✅ server index - Tool registration completed!`);
+
+console.error(`${getCurrentTimestamp()} - ✅ server index - Prompt registration completed!`);
 
 console.error(`${getCurrentTimestamp()} - ✅ server index - Resource registration completed!`);
 
