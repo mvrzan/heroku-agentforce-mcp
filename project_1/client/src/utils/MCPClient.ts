@@ -8,9 +8,14 @@ import { getCurrentTimestamp } from "./loggingUtil.js";
 import { WeatherDataset } from "./types.js";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const ANTHROPIC_CLAUDE_MODEL = process.env.ANTHROPIC_CLAUDE_MODEL;
 
 if (!ANTHROPIC_API_KEY) {
   throw new Error(`${getCurrentTimestamp()} - ❌ MCPClient - ANTHROPIC_API_KEY is not set!`);
+}
+
+if (!ANTHROPIC_CLAUDE_MODEL) {
+  throw new Error(`${getCurrentTimestamp()} - ❌ MCPClient - ANTHROPIC_CLAUDE_MODEL is not set!`);
 }
 
 export class MCPClient {
@@ -76,7 +81,7 @@ export class MCPClient {
 
   async processQuery(query: string) {
     /**
-     * Process a query using Claude and available tools
+     * Process a query using Claude with available tools and resources
      *
      * @param query - The user's input query
      * @returns Processed response as a string
@@ -115,7 +120,9 @@ export class MCPClient {
         // If the query is about current conditions or forecasts AND we have weather tools,
         // let Claude use the tools instead of the static JSON data
         if (requestsRealTimeData && hasWeatherTools) {
-          console.log("Query likely requires real-time weather data. Let Claude decide whether to use weather tools.");
+          console.log(
+            `${getCurrentTimestamp()} - 🤔 MCPClient - The query likely requires a use of the weather tool. Claude will decide what is the appropriate action. `
+          );
           // We'll leave the original query intact so Claude can choose to use the tools
 
           // Add a system note about available tools
@@ -168,8 +175,8 @@ export class MCPClient {
     try {
       // Initial Claude API call
       let response = await this.anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 1500, // Increased to accommodate larger responses with weather data
+        model: ANTHROPIC_CLAUDE_MODEL!,
+        max_tokens: 1500,
         messages,
         tools: this.tools,
       });
@@ -185,7 +192,9 @@ export class MCPClient {
           const toolName = content.name;
           const toolArgs = content.input as { [x: string]: unknown } | undefined;
 
-          console.log(`[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`);
+          console.log(
+            `${getCurrentTimestamp()} - 🤖 MCPClient - Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}`
+          );
 
           const result = await this.mcp.callTool({
             name: toolName,
@@ -212,7 +221,7 @@ export class MCPClient {
 
           // Get next response from Claude with tool results
           response = await this.anthropic.messages.create({
-            model: "claude-3-5-sonnet-20241022",
+            model: ANTHROPIC_CLAUDE_MODEL!,
             max_tokens: 1000,
             messages,
             tools: this.tools,
@@ -229,7 +238,7 @@ export class MCPClient {
 
       return finalText.join("\n");
     } catch (error) {
-      console.error("Error processing query:", error);
+      console.error(`${getCurrentTimestamp()} - ❌ MCPClient- Error processing query:`, error);
       return "Sorry, I encountered an error while processing your query.";
     }
   }
