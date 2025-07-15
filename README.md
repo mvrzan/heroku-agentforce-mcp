@@ -69,14 +69,14 @@ Each one of these applications has its own MCP client, but for the sake of the d
 2.  **MCP Server B (AWS)**: A cloud-hosted server on AWS that connects to a **3rd party service B** via API calls. It uses `Server-Sent Events (SSE)` for communication, which is noted as a [deprecated method](https://modelcontextprotocol.io/docs/concepts/transports#server-sent-events-sse-deprecated).
 3.  **MCP Server C (Heroku)**: Another cloud-hosted server on Heroku, which integrates with a **3rd party service A** and uses `Streamable HTTP` to communicate with the client.
 
-This architecture allows any of the client applications (Cursor, CLI, etc.) to connect to any of the backend servers (local, AWS, or Heroku) through the MCP Client, without needing
+This architecture allows any of the client applications (Cursor, CLI, Claude Desktop, etc.) to connect to any of the backend servers (local, AWS, or Heroku) through the MCP Client, without needing
 to know the specific details of each server's implementation.
 
 ## Project 1: Local MCP Client and Server
 
 ![](./screenshots/project-1-architecture-diagram.png)
 
-This project showcases how to run an MCP Client and Server on your local machine, built with **Node.js**, **TypeScript**, and the **Anthropic SDK**. The architecture involves a single MCP client that communicates with a single MCP server over `stdio`:.
+This project showcases how to run an MCP Client and Server on your local machine, built with **Node.js**, **TypeScript**, and the **Anthropic SDK**. The architecture involves a single MCP client that communicates with a single MCP server over `stdio`:
 
 The architecture diagram shows the following:
 
