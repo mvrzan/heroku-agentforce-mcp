@@ -87,7 +87,7 @@ The architecture diagram shows the following:
     - **Invokes weather API tools**: Lists two weather API [tools](./project_1/server/src/index.ts#55)
     - **Prompt**: Sets a system [prompt](./project_1/server/src/index.ts#216)
 4.  **Context Provisioning**: The MCP Client takes the payload from the MCP servers and passes it to the LLM as context.
-5.  **LLM Processing**: The LLM (invoked via the Anthropic SDK) processes the user's request using the context provided by the MCP Client and decides which resource to invoke.
+5.  **LLM Processing**: The LLM (invoked via the [Anthropic SDK](./project_1/client/src/utils/MCPClient.ts#222)) processes the user's request using the context provided by the MCP Client and decides which resource to invoke.
 6.  **CLI Output**: The LLM's response is returned to the CLI, which then displays the final output to the user.
 
 This setup demonstrates a basic MCP interaction, showcasing how a single MCP Client can connect to a single MCP Server to enhance an LLM context.
