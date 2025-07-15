@@ -7,7 +7,7 @@
 
 # Exploring Model Context Protocol (MCP) with Heroku
 
-The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents.P
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents.
 
 # Table of Contents
 
@@ -35,7 +35,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 
 ## What does it do?
 
-The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents.
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This repository has several projects that showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents.
 
 ## Model Context Protocol Overview
 
