@@ -76,21 +76,21 @@ to know the specific details of each server's implementation.
 
 ![](./screenshots/project-1-architecture-diagram.png)
 
-This project showcases how to run an MCP Client and Server on your local machine, built with **Node.js**, **TypeScript**, and the **Anthropic SDK**. The architecture involves a single MCP client that communicates with three different MCP servers, each with a unique transport mechanism and purpose.
+This project showcases how to run an MCP Client and Server on your local machine, built with **Node.js**, **TypeScript**, and the **Anthropic SDK**. The architecture involves a single MCP client that communicates with a single MCP server over `stdio`:.
 
 The architecture diagram shows the following:
 
 1.  **CLI Invocation**: The process starts when a user invokes a command through the **Command-Line Interface (CLI)**.
-2.  **MCP Client (TypeScript)**: The CLI interacts with an **MCP Client** (implemented in TypeScript) to gather context from various sources.
-3.  **Server Communication**: The client is configured to connect to three different servers to fetch context:
-    - **Local Server**: Communicates over `stdio` to access local data (`data.json`) and a prompt.
-    - **External Server 1**: Uses `Streamable HTTP` to connect with a remote service.
-    - **External Server 2**: Uses `Server-Sent Events (SSE)`, a deprecated transport method, to communicate with another external service.
+2.  **MCP Client (TypeScript)**: The CLI interacts with an **MCP Client** (implemented in TypeScript) to gather context from various resources.
+3.  **MCP Server Capabilities**: The MCP Server is configured with the following capabilities:
+    - **Local file**: Gathers local data ([data.json](./project_1/server/src/data/data.json))
+    - **Invokes weather API tools**: Lists two weather API [tools](./project_1/server/src/index.ts#55)
+    - **Prompt**: Sets a system [prompt](./project_1/server/src/index.ts#216)
 4.  **Context Provisioning**: The MCP Client takes the payload from the MCP servers and passes it to the LLM as context.
-5.  **LLM Processing**: The LLM (invoked via the Anthropic SDK) processes the user's request using the context provided by the MCP Client.
+5.  **LLM Processing**: The LLM (invoked via the Anthropic SDK) processes the user's request using the context provided by the MCP Client and decides which resource to invoke.
 6.  **CLI Output**: The LLM's response is returned to the CLI, which then displays the final output to the user.
 
-This setup demonstrates a sophisticated MCP interaction, showcasing how a single client can orchestrate communication across multiple, diverse servers to provide rich context to an LLM.
+This setup demonstrates a basic MCP interaction, showcasing how a single MCP Client can connect to a single MCP Server to enhance an LLM context.
 
 ### Technologies used
 
