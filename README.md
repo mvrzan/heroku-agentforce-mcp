@@ -177,6 +177,24 @@ When you make changes to your code, the server will automatically restart to fet
 
 ![](./screenshots/project-2-architecture-diagram.png)
 
+This project showcases how to run a local MCP Client with an MCP Server that is hosted on Heroku, built with Node.js, TypeScript, and the Anthropic SDK. The architecture involves a two MCP clients that communicate with with their respective MCP servers over `streamable HTTP` and `SSE (server sent events):
+
+TODO: Update the description
+
+The architecture diagram shows the following:
+
+1.  **CLI Invocation**: The process starts when a user invokes a command through the **Command-Line Interface (CLI)**.
+2.  **MCP Client (TypeScript)**: The CLI interacts with an **MCP Client** (implemented in TypeScript) to gather context from various resources.
+3.  **MCP Server Capabilities**: The MCP Server is configured with the following capabilities:
+    - **Local file**: Gathers local data ([data.json](./project_1/server/src/data/data.json))
+    - **Invokes weather API tools**: Lists two weather API [tools](./project_1/server/src/index.ts#55)
+    - **Prompt**: Sets a system [prompt](./project_1/server/src/index.ts#216)
+4.  **Context Provisioning**: The MCP Client takes the payload from the MCP servers and passes it to the LLM as context.
+5.  **LLM Processing**: The LLM (invoked via the [Anthropic SDK](./project_1/client/src/utils/MCPClient.ts#222)) processes the user's request using the context provided by the MCP Client and decides which resource to invoke.
+6.  **CLI Output**: The LLM's response is returned to the CLI, which then displays the final output to the user.
+
+This setup demonstrates a basic MCP interaction, showcasing how a single MCP Client can connect to a single MCP Server to enhance an LLM context.
+
 ### Technologies used
 
 **Client**
