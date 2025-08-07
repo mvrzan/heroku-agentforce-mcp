@@ -1,0 +1,40 @@
+{
+  "name": "basic-mcp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "weather": "./build/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "dev:sse": "tsx src/sse-server.ts",
+    "dev:http": "tsx src/http-server.ts",
+    "watch": "tsc --watch",
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "start": "node build/index.js",
+    "start:sse": "node build/sse-server.js",
+    "start:http": "node build/http-server.js",
+    "inspector": "npx @modelcontextprotocol/inspector node build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "tsx": "^4.20.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.2.0",
+    "typescript": "^5.9.2"
+  }
+}
