@@ -16,7 +16,7 @@
   "description": "",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.58.0",
-    "@modelcontextprotocol/sdk": "^1.17.1",
+    "@modelcontextprotocol/sdk": "^1.17.2",
     "dotenv": "^17.2.1",
     "tsx": "^4.20.3"
   },
