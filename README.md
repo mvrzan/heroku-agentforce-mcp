@@ -177,7 +177,7 @@ When you make changes to your code, the server will automatically restart to fet
 
 ![](./screenshots/project-2-architecture-diagram.png)
 
-This project showcases how to run a local MCP Client with an MCP Server that is hosted on Heroku, built with Node.js, TypeScript, and the Anthropic SDK. The architecture involves a two MCP clients that communicate with with their respective MCP servers over `streamable HTTP` and `SSE (server sent events):
+This project showcases how to run a local MCP Client with an MCP Server that is hosted on Heroku, built with Node.js, TypeScript, and the Anthropic SDK. The architecture involves a two MCP clients that communicate with with their respective MCP servers over `streamable HTTP` and `SSE (server sent events)`:
 
 TODO: Update the description
 
