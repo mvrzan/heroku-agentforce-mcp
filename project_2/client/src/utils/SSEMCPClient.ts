@@ -1,5 +1,4 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { MessageParam, Tool } from "@anthropic-ai/sdk/resources/messages/messages.mjs";
@@ -11,45 +10,35 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_CLAUDE_MODEL = process.env.ANTHROPIC_CLAUDE_MODEL;
 
 if (!ANTHROPIC_API_KEY) {
-  throw new Error(`${getCurrentTimestamp()} - ❌ MCPClient - ANTHROPIC_API_KEY is not set!`);
+  throw new Error(`${getCurrentTimestamp()} - ❌ SSEMCPClient - ANTHROPIC_API_KEY is not set!`);
 }
 
 if (!ANTHROPIC_CLAUDE_MODEL) {
-  throw new Error(`${getCurrentTimestamp()} - ❌ MCPClient - ANTHROPIC_CLAUDE_MODEL is not set!`);
+  throw new Error(`${getCurrentTimestamp()} - ❌ SSEMCPClient - ANTHROPIC_CLAUDE_MODEL is not set!`);
 }
 
-export class MCPClient {
+export class SSEMCPClient {
   private mcp: Client;
   private anthropic: Anthropic;
-  private transport: StdioClientTransport | SSEClientTransport | null = null;
+  private transport: SSEClientTransport | null = null;
   private tools: Tool[] = [];
 
   constructor() {
     this.anthropic = new Anthropic({
       apiKey: ANTHROPIC_API_KEY,
     });
-    this.mcp = new Client({ name: "mcp-client-cli", version: "1.0.0" });
+    this.mcp = new Client({ name: "sse-mcp-client", version: "1.0.0" });
   }
 
-  async connectToServer(serverScriptPath: string) {
+  async connectToServer(serverUrl: string) {
     try {
-      const isUrl = serverScriptPath.startsWith("http://") || serverScriptPath.startsWith("https://");
-
-      if (isUrl) {
-        // Use SSE transport for remote MCP server
-        this.transport = new SSEClientTransport(new URL(serverScriptPath));
-        this.mcp.connect(this.transport);
-      } else {
-        if (!serverScriptPath.endsWith(".js")) {
-          throw new Error("Server script must be a .js file or a valid URL");
-        }
-
-        this.transport = new StdioClientTransport({
-          command: process.execPath,
-          args: [serverScriptPath],
-        });
-        this.mcp.connect(this.transport);
+      if (!serverUrl.startsWith("http://") && !serverUrl.startsWith("https://")) {
+        throw new Error("SSE server URL must start with http:// or https://");
       }
+
+      console.log(`${getCurrentTimestamp()} - 🔗 SSEMCPClient - Connecting to SSE server at: ${serverUrl}`);
+      this.transport = new SSEClientTransport(new URL(serverUrl));
+      await this.mcp.connect(this.transport);
 
       // List available tools
       const toolsResult = await this.mcp.listTools();
@@ -61,7 +50,7 @@ export class MCPClient {
         };
       });
       console.log(
-        `${getCurrentTimestamp()} - 🔌 MCPClient - Connected to server with tools:`,
+        `${getCurrentTimestamp()} - 🔌 SSEMCPClient - Connected to SSE server with tools:`,
         this.tools.map(({ name }) => name)
       );
 
@@ -69,12 +58,12 @@ export class MCPClient {
       const resources = await this.mcp.listResources();
       if (resources.resources && resources.resources.length > 0) {
         console.log(
-          `${getCurrentTimestamp()} - 🧰 MCPClient - Available resources:`,
+          `${getCurrentTimestamp()} - 🧰 SSEMCPClient - Available resources:`,
           resources.resources.map((resource) => resource.name).join(", ")
         );
       }
     } catch (error) {
-      console.error(`${getCurrentTimestamp()} - ❌ MCPClient - Failed to connect to MCP server:`, error);
+      console.error(`${getCurrentTimestamp()} - ❌ SSEMCPClient - Failed to connect to SSE server:`, error);
       throw error;
     }
   }
@@ -95,13 +84,13 @@ export class MCPClient {
 
     // First, try to fetch the prompt from MCP server to use as system prompt
     try {
-      console.log(`${getCurrentTimestamp()} - 🔍 MCPClient - Discovering available prompts...`);
+      console.log(`${getCurrentTimestamp()} - 🔍 SSEMCPClient - Discovering available prompts...`);
 
       // Get list of available prompts
       const promptsList = await this.mcp.listPrompts();
 
       if (promptsList.prompts && promptsList.prompts.length > 0) {
-        console.log(`${getCurrentTimestamp()} - ✅ MCPClient - Found ${promptsList.prompts.length} prompts`);
+        console.log(`${getCurrentTimestamp()} - ✅ SSEMCPClient - Found ${promptsList.prompts.length} prompts`);
 
         // Find the weather assistant prompt
         const weatherPrompt = promptsList.prompts.find(
@@ -109,14 +98,14 @@ export class MCPClient {
         );
 
         if (weatherPrompt) {
-          console.log(`${getCurrentTimestamp()} - 📋 MCPClient - Found weather prompt: ${weatherPrompt.name}`);
+          console.log(`${getCurrentTimestamp()} - 📋 SSEMCPClient - Found weather prompt: ${weatherPrompt.name}`);
 
           // Get the specific prompt content
           const promptResponse = await this.mcp.getPrompt({ name: weatherPrompt.name });
 
           if (promptResponse && promptResponse.messages) {
             console.log(
-              `${getCurrentTimestamp()} - 📚 MCPClient - Successfully retrieved prompt with ${
+              `${getCurrentTimestamp()} - 📚 SSEMCPClient - Successfully retrieved prompt with ${
                 promptResponse.messages.length
               } messages`
             );
@@ -132,7 +121,7 @@ export class MCPClient {
         }
       }
     } catch (error) {
-      console.error(`${getCurrentTimestamp()} - ⚠️ MCPClient - Failed to load prompt:`, error);
+      console.error(`${getCurrentTimestamp()} - ⚠️ SSEMCPClient - Failed to load prompt:`, error);
     }
 
     // Add user query after any prompt messages
@@ -164,7 +153,7 @@ export class MCPClient {
         // let Claude use the tools instead of the static JSON data
         if (requestsRealTimeData && hasWeatherTools) {
           console.log(
-            `${getCurrentTimestamp()} - 🤔 MCPClient - The query likely requires a use of the weather tool. Claude will decide what is the appropriate action. `
+            `${getCurrentTimestamp()} - 🤔 SSEMCPClient - The query likely requires a use of the weather tool. Claude will decide what is the appropriate action.`
           );
           // We'll leave the original query intact so Claude can choose to use the tools
 
@@ -238,7 +227,9 @@ export class MCPClient {
           const toolArgs = content.input as { [x: string]: unknown } | undefined;
 
           console.log(
-            `${getCurrentTimestamp()} - 🤖 MCPClient - Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}`
+            `${getCurrentTimestamp()} - 🤖 SSEMCPClient - Calling tool ${toolName} with args ${JSON.stringify(
+              toolArgs
+            )}`
           );
 
           const result = await this.mcp.callTool({
@@ -283,7 +274,7 @@ export class MCPClient {
 
       return finalText.join("\n");
     } catch (error) {
-      console.error(`${getCurrentTimestamp()} - ❌ MCPClient- Error processing query:`, error);
+      console.error(`${getCurrentTimestamp()} - ❌ SSEMCPClient - Error processing query:`, error);
       return "Sorry, I encountered an error while processing your query.";
     }
   }
@@ -295,11 +286,11 @@ export class MCPClient {
     });
 
     try {
-      console.log(`\n${getCurrentTimestamp()} - ✅ MCPClient - MCP Client Started!`);
-      console.log(`${getCurrentTimestamp()} - ✍️ MCPClient - Type your queries or 'quit' to exit.`);
+      console.log(`\n${getCurrentTimestamp()} - ✅ SSEMCPClient - SSE MCP Client Started!`);
+      console.log(`${getCurrentTimestamp()} - ✍️ SSEMCPClient - Type your queries or 'quit' to exit.`);
 
       while (true) {
-        const message = await rl.question("\nQuery: ");
+        const message = await rl.question("\nQuery (SSE): ");
         if (message.toLowerCase() === "quit") {
           break;
         }
@@ -307,7 +298,7 @@ export class MCPClient {
           const response = await this.processQuery(message);
           console.log("\n" + response);
         } catch (error) {
-          console.error(`${getCurrentTimestamp()} - ❌ MCPClient - Error processing query:`, error);
+          console.error(`${getCurrentTimestamp()} - ❌ SSEMCPClient - Error processing query:`, error);
           console.log("Session continuing...");
         }
       }
