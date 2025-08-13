@@ -70,29 +70,24 @@ export class MCPClient {
   }
 
   async processQuery(query: string) {
-    const weatherKeywords = ["weather", "climate", "temperature", "forecast", "climate change", "dataset"];
-    let weatherData: WeatherDataset;
-    let weatherInfo = "";
     const workingMessages: MessageParam[] = [...this.messages];
 
     try {
       console.log("\n");
       console.log(`${getCurrentTimestamp()} - 🔍 MCPClient - Discovering available prompts...`);
+
       const promptsList = await this.mcp.listPrompts();
+      const prompt = promptsList.prompts[0];
+      const promptResponse = await this.mcp.getPrompt({ name: prompt.name });
 
-      if (promptsList.prompts && promptsList.prompts.length > 0) {
-        const prompt = promptsList.prompts[0];
-        const promptResponse = await this.mcp.getPrompt({ name: prompt.name });
+      if (promptResponse && promptResponse.messages) {
+        for (const promptMessage of promptResponse.messages) {
+          workingMessages.push({
+            role: promptMessage.role as "user" | "assistant",
+            content: promptMessage.content.type === "text" ? promptMessage.content.text : "",
+          });
 
-        if (promptResponse && promptResponse.messages) {
-          for (const promptMessage of promptResponse.messages) {
-            workingMessages.push({
-              role: promptMessage.role as "user" | "assistant",
-              content: promptMessage.content.type === "text" ? promptMessage.content.text : "",
-            });
-
-            console.log(`${getCurrentTimestamp()} - ✅ MCPClient - Prompt added!`);
-          }
+          console.log(`${getCurrentTimestamp()} - ✅ MCPClient - Prompt added!`);
         }
       }
     } catch (error) {
@@ -104,88 +99,38 @@ export class MCPClient {
       content: query,
     });
 
-    // Check if query is related to weather data
-    if (weatherKeywords.some((keyword) => query.toLowerCase().includes(keyword))) {
+    try {
+      console.log(`${getCurrentTimestamp()} - 🔍 MCPClient - Checking for available resources...`);
+      const resources = await this.mcp.listResources();
+      const dataResource = resources.resources.find((resource) => resource.uri.toLowerCase().includes("data.json"))!;
+
       try {
-        // Check for available resources
-        const resources = await this.mcp.listResources();
+        const content = await this.mcp.readResource({ uri: dataResource.uri });
 
-        // Check if any of our tools are specifically for weather forecasts or alerts
-        const hasWeatherTools = this.tools.some(
-          (tool) => tool.name.includes("forecast") || tool.name.includes("alert") || tool.name.includes("weather")
-        );
+        if (content.contents && content.contents.length > 0) {
+          const contentText = typeof content.contents[0].text === "string" ? content.contents[0].text : "";
+          const resourceData = JSON.parse(contentText);
+          const resourceInfo = `Available data from MCP server (${dataResource.name}):\n${Object.keys(resourceData)
+            .map((key) => `- ${key}`)
+            .join("\n")}`;
 
-        // Get real-time data request indicators
-        const requestsRealTimeData =
-          query.toLowerCase().includes("current") ||
-          query.toLowerCase().includes("today") ||
-          query.toLowerCase().includes("now") ||
-          query.toLowerCase().includes("forecast") ||
-          query.toLowerCase().includes("alert");
-
-        // If the query is about current conditions or forecasts AND we have weather tools,
-        // let Claude use the tools instead of the static JSON data
-        if (requestsRealTimeData && hasWeatherTools) {
-          console.log(
-            `${getCurrentTimestamp()} - 🤔 MCPClient - The query likely requires a use of the weather tool. Claude will decide what is the appropriate action. `
-          );
-          // We'll leave the original query intact so Claude can choose to use the tools
-
-          // Update message with tools note
           const messageContent = workingMessages[workingMessages.length - 1].content;
           workingMessages[
             workingMessages.length - 1
-          ].content = `${messageContent}\n\n(Note: You have access to weather tools that can provide real-time forecasts and alerts. Use them if the query requires current weather information.)`;
-        }
-        // Otherwise, check for historical/static weather data
-        else if (resources.resources && resources.resources.length > 0) {
-          // Find weather data resource
-          const weatherResource = resources.resources.find(
-            (resource) =>
-              resource.uri.toLowerCase().includes("data.json") || resource.title?.toLowerCase().includes("weather")
-          );
+          ].content = `${messageContent}\n\n${resourceInfo}\n\nFull data:\n${JSON.stringify(resourceData, null, 2)}`;
 
-          if (weatherResource) {
-            try {
-              // Fetch the weather data resource
-              const content = await this.mcp.readResource({ uri: weatherResource.uri });
-
-              if (content.contents && content.contents.length > 0) {
-                // Get text content and parse JSON
-                const contentText = typeof content.contents[0].text === "string" ? content.contents[0].text : "";
-                weatherData = JSON.parse(contentText);
-
-                // Prepare weather information to add to the query
-                weatherInfo = "I found historical weather data from the MCP server with the following categories:\n";
-                for (const key of Object.keys(weatherData)) {
-                  weatherInfo += `- ${key}\n`;
-                }
-
-                // Add the relevant weather data to Claude's context
-                const messageContent = workingMessages[workingMessages.length - 1].content;
-                workingMessages[
-                  workingMessages.length - 1
-                ].content = `${messageContent}\n\nHere's the available historical weather data from the server:\n${weatherInfo}\n\nFull weather data JSON:\n${JSON.stringify(
-                  weatherData,
-                  null,
-                  2
-                )}`;
-                console.log("Including historical weather data in the request to Claude");
-              }
-            } catch (error) {
-              console.error("Error reading weather data:", error);
-              // Continue with normal query processing
-            }
-          }
+          console.log(`${getCurrentTimestamp()} - ✅ MCPClient - Resource data added to context`);
         }
       } catch (error) {
-        console.error("Error fetching resources:", error);
-        // Continue with normal query processing if resource fetch fails
+        console.error(`${getCurrentTimestamp()} - ❌ MCPClient - Error reading resource:`, error);
       }
+    } catch (error) {
+      console.error(`${getCurrentTimestamp()} - ❌ MCPClient - Error fetching resources:`, error);
     }
 
     try {
-      // Initial Claude API call
+      console.log(`${getCurrentTimestamp()} - 💬 MCPClient - Sending query to Claude...`);
+
       let response = await this.anthropic.messages.create({
         model: ANTHROPIC_CLAUDE_MODEL!,
         max_tokens: 1500,
@@ -193,7 +138,6 @@ export class MCPClient {
         tools: this.tools,
       });
 
-      // Process response and handle tool calls
       const finalText = [];
 
       for (const content of response.content) {
@@ -203,6 +147,8 @@ export class MCPClient {
           // Execute tool call
           const toolName = content.name;
           const toolArgs = content.input as { [x: string]: unknown } | undefined;
+
+          console.log(`${getCurrentTimestamp()} - 🔧 MCPClient - Calling tool: ${toolName}`);
 
           const result = await this.mcp.callTool({
             name: toolName,
@@ -222,6 +168,7 @@ export class MCPClient {
               .map((item: any) => (item.type === "text" ? item.text : String(item)))
               .join("\n");
           } else {
+            console.log("content type", content.type);
             toolResultText = String(result.content);
           }
 
@@ -235,6 +182,8 @@ export class MCPClient {
               },
             ],
           });
+
+          console.log(`${getCurrentTimestamp()} - 📝 MCPClient - Getting final response from Claude...`);
 
           // Get final response from Claude with tool results - no tools to prevent additional calls
           response = await this.anthropic.messages.create({
