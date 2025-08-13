@@ -1,11 +1,9 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { MessageParam, Tool } from "@anthropic-ai/sdk/resources/messages/messages.mjs";
 import readline from "readline/promises";
 import { getCurrentTimestamp } from "./loggingUtil.js";
-import { WeatherDataset } from "./types.js";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_CLAUDE_MODEL = process.env.ANTHROPIC_CLAUDE_MODEL;
