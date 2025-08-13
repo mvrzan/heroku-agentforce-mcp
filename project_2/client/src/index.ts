@@ -79,10 +79,10 @@ class UnifiedMCPClient {
   private async getClientTools(client: SSEMCPClient | HTTPMCPClient): Promise<Tool[]> {
     try {
       // Access the internal MCP client to get tools
-      const mcpClient = (client as any).mcp;
+      const mcpClient = client.mcpClient;
       if (mcpClient) {
         const toolsResult = await mcpClient.listTools();
-        return toolsResult.tools.map((tool: any) => ({
+        return toolsResult.tools.map((tool) => ({
           name: tool.name,
           description: tool.description,
           input_schema: tool.inputSchema,
@@ -96,7 +96,7 @@ class UnifiedMCPClient {
 
   private async getClientResources(client: SSEMCPClient | HTTPMCPClient): Promise<any[]> {
     try {
-      const mcpClient = (client as any).mcp;
+      const mcpClient = client.mcpClient;
       if (mcpClient) {
         const resourcesResult = await mcpClient.listResources();
         return resourcesResult.resources || [];
@@ -182,7 +182,7 @@ class UnifiedMCPClient {
           );
 
           // Call the tool on the appropriate client
-          const mcpClient = (unifiedTool.client as any).mcp;
+          const mcpClient = unifiedTool.client.mcpClient;
           const result = await mcpClient.callTool({
             name: toolName,
             arguments: toolArgs,
