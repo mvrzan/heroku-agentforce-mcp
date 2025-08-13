@@ -11,11 +11,11 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_CLAUDE_MODEL = process.env.ANTHROPIC_CLAUDE_MODEL;
 
 if (!ANTHROPIC_API_KEY) {
-  throw new Error(`${getCurrentTimestamp()} - ❌ MCPClient - ANTHROPIC_API_KEY is not set!`);
+  throw new Error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - ANTHROPIC_API_KEY is not set!`);
 }
 
 if (!ANTHROPIC_CLAUDE_MODEL) {
-  throw new Error(`${getCurrentTimestamp()} - ❌ MCPClient - ANTHROPIC_CLAUDE_MODEL is not set!`);
+  throw new Error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - ANTHROPIC_CLAUDE_MODEL is not set!`);
 }
 
 class UnifiedMCPClient {
@@ -32,13 +32,12 @@ class UnifiedMCPClient {
   }
 
   async initialize() {
-    console.log("Initializing unified client...");
+    console.log(`${getCurrentTimestamp()} - 🔄 UnifiedMCPClient - Initializing unified client...`);
 
-    // Collect all tools and resources from all clients
     for (const clientInstance of this.clients) {
       try {
-        // Get tools from this client - we need to access the internal tools
         const clientTools = await this.getClientTools(clientInstance.client);
+
         clientTools.forEach((tool) => {
           this.unifiedTools.push({
             name: tool.name,
@@ -49,8 +48,8 @@ class UnifiedMCPClient {
           });
         });
 
-        // Get resources from this client
         const clientResources = await this.getClientResources(clientInstance.client);
+
         clientResources.forEach((resource) => {
           this.unifiedResources.push({
             name: resource.name || "Unknown Resource",
@@ -61,22 +60,25 @@ class UnifiedMCPClient {
           });
         });
 
-        console.log(`✅ Integrated ${clientInstance.identifier}`);
+        console.log(`${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Integrated ${clientInstance.identifier}`);
       } catch (error) {
-        console.error(`❌ Failed to integrate ${clientInstance.identifier}:`, error);
+        console.error(
+          `${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Failed to integrate ${clientInstance.identifier}:`,
+          error
+        );
       }
     }
 
     console.log(
-      `🔄 Unified client ready with ${this.unifiedTools.length} tools and ${this.unifiedResources.length} resources`
+      `${getCurrentTimestamp()} - 🔄 UnifiedMCPClient - Unified client ready with ${
+        this.unifiedTools.length
+      } tools and ${this.unifiedResources.length} resources`
     );
   }
 
   private async getClientTools(client: SSEMCPClient | HTTPMCPClient): Promise<Tool[]> {
-    // Access the private tools property - we'll need to make this accessible
-    // For now, let's try to get tools through the MCP client's listTools method
     try {
-      // This is a bit of a hack, but we need to access the MCP client
+      // Access the internal MCP client to get tools
       const mcpClient = (client as any).mcp;
       if (mcpClient) {
         const toolsResult = await mcpClient.listTools();
@@ -87,7 +89,7 @@ class UnifiedMCPClient {
         }));
       }
     } catch (error) {
-      console.error("Error getting tools from client:", error);
+      console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Error getting tools from client:`, error);
     }
     return [];
   }
@@ -100,7 +102,7 @@ class UnifiedMCPClient {
         return resourcesResult.resources || [];
       }
     } catch (error) {
-      console.error("Error getting resources from client:", error);
+      console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Error getting resources from client:`, error);
     }
     return [];
   }
@@ -114,14 +116,14 @@ class UnifiedMCPClient {
   }
 
   async processQuery(query: string): Promise<string> {
-    try {
-      const messages: MessageParam[] = [
-        {
-          role: "user",
-          content: query,
-        },
-      ];
+    const workingMessages: MessageParam[] = [
+      {
+        role: "user",
+        content: query,
+      },
+    ];
 
+    try {
       // Convert unified tools to Anthropic format
       const tools: Tool[] = this.unifiedTools.map((tool) => ({
         name: tool.name,
@@ -129,32 +131,55 @@ class UnifiedMCPClient {
         input_schema: tool.input_schema,
       }));
 
-      console.log(`🤖 Querying Claude with ${tools.length} available tools...`);
+      console.log(
+        `${getCurrentTimestamp()} - 💬 UnifiedMCPClient - Querying Claude with ${tools.length} available tools...`
+      );
 
       let response = await this.anthropic.messages.create({
         model: ANTHROPIC_CLAUDE_MODEL!,
         max_tokens: 1500,
-        messages,
+        messages: workingMessages,
         tools: tools,
       });
 
       const finalText: string[] = [];
+      const toolCalls = [];
 
       for (const content of response.content) {
         if (content.type === "text") {
           finalText.push(content.text);
         } else if (content.type === "tool_use") {
-          const toolName = content.name;
-          const toolArgs = content.input as { [x: string]: unknown } | undefined;
+          toolCalls.push(content);
+        }
+      }
+
+      if (toolCalls.length > 0) {
+        workingMessages.push({
+          role: "assistant",
+          content: response.content,
+        });
+
+        const toolResults = [];
+
+        for (const toolCall of toolCalls) {
+          const toolName = toolCall.name;
+          const toolArgs = toolCall.input as { [x: string]: unknown } | undefined;
 
           // Find the unified tool and its source client
           const unifiedTool = this.unifiedTools.find((t) => t.name === toolName);
           if (!unifiedTool) {
-            finalText.push(`Error: Tool ${toolName} not found`);
+            console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Tool ${toolName} not found`);
+            toolResults.push({
+              type: "tool_result" as const,
+              tool_use_id: toolCall.id,
+              content: `Error: Tool ${toolName} not found`,
+            });
             continue;
           }
 
-          console.log(`🔧 Calling tool ${toolName} on ${unifiedTool.source}`);
+          console.log(
+            `${getCurrentTimestamp()} - 🔧 UnifiedMCPClient - Calling tool ${toolName} on ${unifiedTool.source}`
+          );
 
           // Call the tool on the appropriate client
           const mcpClient = (unifiedTool.client as any).mcp;
@@ -163,76 +188,93 @@ class UnifiedMCPClient {
             arguments: toolArgs,
           });
 
-          // Add the assistant's response (with tool use) to messages
-          messages.push({
-            role: "assistant",
-            content: response.content,
-          });
+          let toolResultText = "";
+          if (Array.isArray(result.content)) {
+            toolResultText = result.content
+              .map((item: any) => (item.type === "text" ? item.text : String(item)))
+              .join("\n");
+          } else {
+            toolResultText = String(result.content);
+          }
 
-          // Add the tool result
-          messages.push({
-            role: "user",
-            content: [
-              {
-                type: "tool_result",
-                tool_use_id: content.id,
-                content: result.content as string,
-              },
-            ],
+          toolResults.push({
+            type: "tool_result" as const,
+            tool_use_id: toolCall.id,
+            content: toolResultText,
           });
+        }
 
-          // Get next response from Claude with tool results
-          response = await this.anthropic.messages.create({
-            model: ANTHROPIC_CLAUDE_MODEL!,
-            max_tokens: 1000,
-            messages,
-            tools: tools,
-          });
+        workingMessages.push({
+          role: "user",
+          content: toolResults,
+        });
 
-          // Add the final response text
-          for (const finalContent of response.content) {
-            if (finalContent.type === "text") {
-              finalText.push(finalContent.text);
-            }
+        console.log(`${getCurrentTimestamp()} - 📝 UnifiedMCPClient - Getting final response from Claude...`);
+
+        // Get next response from Claude with tool results
+        response = await this.anthropic.messages.create({
+          model: ANTHROPIC_CLAUDE_MODEL!,
+          max_tokens: 1000,
+          messages: workingMessages,
+        });
+
+        // Add the final response text
+        for (const finalContent of response.content) {
+          if (finalContent.type === "text") {
+            finalText.push(finalContent.text);
           }
         }
       }
 
       return finalText.join("\n");
     } catch (error) {
-      console.error("Error processing query:", error);
+      console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Error processing query:`, error);
       return "Sorry, I encountered an error while processing your query.";
     }
   }
 }
 
 async function unifiedChatMode(unifiedClient: UnifiedMCPClient, rl: readline.Interface) {
-  console.log("\n🤖 Unified Chat Mode - Connected to all MCP servers");
-  console.log("Claude will automatically select the best tools from all available servers");
-  console.log("Type 'quit' to exit\n");
+  console.log(`\n${getCurrentTimestamp()} - 🤖 UnifiedMCPClient - Unified Chat Mode - Connected to all MCP servers`);
+  console.log(
+    `${getCurrentTimestamp()} - 🔧 UnifiedMCPClient - Claude will automatically select the best tools from all available servers`
+  );
+  console.log(`${getCurrentTimestamp()} - ✍️ UnifiedMCPClient - Type 'quit' to exit\n`);
 
   const allTools = await unifiedClient.getAllTools();
   const allResources = await unifiedClient.getAllResources();
 
-  console.log(`Available tools: ${allTools.map((t) => `${t.name} (${t.source})`).join(", ")}`);
+  console.log(
+    `${getCurrentTimestamp()} - 🧰 UnifiedMCPClient - Available tools: ${allTools
+      .map((t) => `${t.name} (${t.source})`)
+      .join(", ")}`
+  );
   if (allResources.length > 0) {
-    console.log(`Available resources: ${allResources.map((r) => `${r.name} (${r.source})`).join(", ")}`);
+    console.log(
+      `${getCurrentTimestamp()} - 🧰 UnifiedMCPClient - Available resources: ${allResources
+        .map((r) => `${r.name} (${r.source})`)
+        .join(", ")}`
+    );
   }
   console.log();
 
   while (true) {
-    const input = await rl.question("You: ");
+    const input = await rl.question("Query: ");
     if (input.toLowerCase() === "quit") break;
 
-    console.log("🤖 Processing...");
-    const response = await unifiedClient.processQuery(input);
-    console.log("Assistant:", response);
-    console.log();
+    try {
+      console.log(`${getCurrentTimestamp()} - 🤖 UnifiedMCPClient - Processing query...`);
+      const response = await unifiedClient.processQuery(input);
+      console.log("\n" + response);
+    } catch (error) {
+      console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Error processing query:`, error);
+      console.log("Session continuing...");
+    }
   }
 }
 
 async function main() {
-  console.log("Multi-MCP Client CLI");
+  console.log(`${getCurrentTimestamp()} - 🚀 UnifiedMCPClient - Multi-MCP Client CLI`);
   console.log("==================");
   console.log("This CLI supports connecting to multiple MCP servers:");
   console.log("- SSE (Server-Sent Events) servers");
@@ -245,41 +287,54 @@ async function main() {
     output: process.stdout,
   });
 
+  rl.on("SIGINT", () => {
+    console.log(`\n${getCurrentTimestamp()} - 🛑 UnifiedMCPClient - Interrupted by user`);
+    rl.close();
+    process.exit(0);
+  });
+
   try {
     // Setup phase - connect to servers
     await setupClients(clients, rl);
 
     if (clients.length === 0) {
-      console.log("No clients connected. Exiting.");
+      console.log(`${getCurrentTimestamp()} - ⚠️ UnifiedMCPClient - No clients connected. Exiting.`);
       return;
     }
 
     // Interactive phase - choose clients and send queries
     await interactiveMode(clients, rl);
   } finally {
-    // Cleanup all clients
-    console.log("\nCleaning up clients...");
-    for (const clientInstance of clients) {
-      try {
-        await clientInstance.client.cleanup();
-      } catch (error) {
-        console.error(`Error cleaning up ${clientInstance.identifier}:`, error);
-      }
-    }
+    await cleanup(clients);
     rl.close();
     process.exit(0);
   }
 }
 
+async function cleanup(clients: ClientInstance[]) {
+  console.log(`\n${getCurrentTimestamp()} - 🧹 UnifiedMCPClient - Cleaning up clients...`);
+  for (const clientInstance of clients) {
+    try {
+      await clientInstance.client.cleanup();
+      console.log(`${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Cleaned up ${clientInstance.identifier}`);
+    } catch (error) {
+      console.error(
+        `${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Error cleaning up ${clientInstance.identifier}:`,
+        error
+      );
+    }
+  }
+}
+
 async function setupClients(clients: ClientInstance[], rl: readline.Interface) {
-  console.log("=== Client Setup ===");
+  console.log(`${getCurrentTimestamp()} - ⚙️ UnifiedMCPClient - === Client Setup ===`);
   console.log("You can connect to multiple MCP servers. Press Enter with empty input when done.");
   console.log();
 
   let clientNumber = 1;
 
   while (true) {
-    console.log(`\nSetting up Client #${clientNumber}:`);
+    console.log(`\n${getCurrentTimestamp()} - 🔧 UnifiedMCPClient - Setting up Client #${clientNumber}:`);
     console.log("1. SSE Server (e.g., http://localhost:3000/sse)");
     console.log("2. HTTP Server (e.g., http://localhost:3000/mcp)");
     console.log("3. Skip (finish setup)");
@@ -300,7 +355,7 @@ async function setupClients(clients: ClientInstance[], rl: readline.Interface) {
           // SSE Server
           serverPath = await rl.question("Enter SSE server URL (e.g., http://localhost:3000/sse): ");
           if (!serverPath) {
-            console.log("No URL provided, skipping.");
+            console.log(`${getCurrentTimestamp()} - ⚠️ UnifiedMCPClient - No URL provided, skipping.`);
             continue;
           }
           client = new SSEMCPClient();
@@ -311,7 +366,7 @@ async function setupClients(clients: ClientInstance[], rl: readline.Interface) {
           // HTTP Server
           serverPath = await rl.question("Enter HTTP server URL (e.g., http://localhost:3000/mcp): ");
           if (!serverPath) {
-            console.log("No URL provided, skipping.");
+            console.log(`${getCurrentTimestamp()} - ⚠️ UnifiedMCPClient - No URL provided, skipping.`);
             continue;
           }
           client = new HTTPMCPClient();
@@ -319,28 +374,30 @@ async function setupClients(clients: ClientInstance[], rl: readline.Interface) {
           break;
 
         default:
-          console.log("Invalid choice, skipping.");
+          console.log(`${getCurrentTimestamp()} - ⚠️ UnifiedMCPClient - Invalid choice, skipping.`);
           continue;
       }
 
-      console.log(`Connecting to ${type} server...`);
+      console.log(`${getCurrentTimestamp()} - 🔗 UnifiedMCPClient - Connecting to ${type} server...`);
       await client.connectToServer(serverPath);
 
       const identifier = `${type}-Client-${clientNumber}`;
       clients.push({ type, client, identifier });
-      console.log(`✅ Successfully connected ${identifier}`);
+      console.log(`${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Successfully connected ${identifier}`);
       clientNumber++;
     } catch (error) {
-      console.error(`❌ Failed to connect client: ${error}`);
+      console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Failed to connect client:`, error);
       console.log("Continuing with setup...");
     }
   }
 
-  console.log(`\n✅ Setup complete! Connected ${clients.length} client(s).`);
+  console.log(
+    `\n${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Setup complete! Connected ${clients.length} client(s).`
+  );
 }
 
 async function interactiveMode(clients: ClientInstance[], rl: readline.Interface) {
-  console.log("\n=== Unified MCP Client ===");
+  console.log(`\n${getCurrentTimestamp()} - 🤖 UnifiedMCPClient - === Unified MCP Client ===`);
   console.log("All connected servers have been unified into a single interface.");
   console.log("The LLM can see and use tools from all servers automatically.");
   console.log();
@@ -364,7 +421,7 @@ async function interactiveMode(clients: ClientInstance[], rl: readline.Interface
     try {
       switch (command) {
         case "tools":
-          console.log("\nAvailable tools across all servers:");
+          console.log(`\n${getCurrentTimestamp()} - 🧰 UnifiedMCPClient - Available tools across all servers:`);
           const allTools = await unifiedClient.getAllTools();
           allTools.forEach((tool, index) => {
             console.log(`  ${index + 1}. ${tool.name} - ${tool.description} (from ${tool.source})`);
@@ -372,7 +429,7 @@ async function interactiveMode(clients: ClientInstance[], rl: readline.Interface
           break;
 
         case "resources":
-          console.log("\nAvailable resources across all servers:");
+          console.log(`\n${getCurrentTimestamp()} - 🧰 UnifiedMCPClient - Available resources across all servers:`);
           const allResources = await unifiedClient.getAllResources();
           allResources.forEach((resource, index) => {
             console.log(`  ${index + 1}. ${resource.name} - ${resource.description} (from ${resource.source})`);
@@ -380,14 +437,16 @@ async function interactiveMode(clients: ClientInstance[], rl: readline.Interface
           break;
 
         case "servers":
-          console.log("\nConnected servers:");
+          console.log(`\n${getCurrentTimestamp()} - 🔗 UnifiedMCPClient - Connected servers:`);
           clients.forEach((client, index) => {
             console.log(`  ${index + 1}. ${client.identifier} (${client.type})`);
           });
           break;
 
         case "chat":
-          console.log("Starting unified chat mode. The LLM can use tools from any connected server.");
+          console.log(
+            `${getCurrentTimestamp()} - 💬 UnifiedMCPClient - Starting unified chat mode. The LLM can use tools from any connected server.`
+          );
           await unifiedChatMode(unifiedClient, rl);
           break;
 
@@ -396,7 +455,7 @@ async function interactiveMode(clients: ClientInstance[], rl: readline.Interface
           return;
 
         case "help":
-          console.log("\nAvailable commands:");
+          console.log(`\n${getCurrentTimestamp()} - ℹ️ UnifiedMCPClient - Available commands:`);
           console.log("- 'tools' - Show all available tools from all servers");
           console.log("- 'resources' - Show all available resources from all servers");
           console.log("- 'servers' - Show connected servers");
@@ -407,23 +466,25 @@ async function interactiveMode(clients: ClientInstance[], rl: readline.Interface
         default:
           // Treat any other input as a direct query
           if (input.trim()) {
-            console.log("Processing query through unified client...");
+            console.log(`${getCurrentTimestamp()} - 🤖 UnifiedMCPClient - Processing query through unified client...`);
             const response = await unifiedClient.processQuery(input.trim());
             console.log("\nResponse:");
             console.log(response);
           } else {
-            console.log("Unknown command. Type 'help' for available commands.");
+            console.log(
+              `${getCurrentTimestamp()} - ⚠️ UnifiedMCPClient - Unknown command. Type 'help' for available commands.`
+            );
           }
           break;
       }
     } catch (error) {
-      console.error(`Error executing command: ${error}`);
+      console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Error executing command:`, error);
     }
   }
 }
 
 async function chatMode(clientInstance: ClientInstance, rl: readline.Interface) {
-  console.log(`\n=== Chat Mode: ${clientInstance.identifier} ===`);
+  console.log(`\n${getCurrentTimestamp()} - 💬 UnifiedMCPClient - === Chat Mode: ${clientInstance.identifier} ===`);
 
   while (true) {
     const query = await rl.question(`\n[${clientInstance.identifier}] Query: `);
@@ -438,14 +499,16 @@ async function chatMode(clientInstance: ClientInstance, rl: readline.Interface) 
         console.log(`\n[${clientInstance.identifier}] Response:`);
         console.log(response);
       } catch (error) {
-        console.error(`Error processing query: ${error}`);
+        console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Error processing query:`, error);
       }
     }
   }
 }
 
 async function broadcastQuery(clients: ClientInstance[], query: string) {
-  console.log(`\nBroadcasting query to ${clients.length} client(s): "${query}"`);
+  console.log(
+    `\n${getCurrentTimestamp()} - 📡 UnifiedMCPClient - Broadcasting query to ${clients.length} client(s): "${query}"`
+  );
   console.log("=" + "=".repeat(50));
 
   const promises = clients.map(async (clientInstance) => {
