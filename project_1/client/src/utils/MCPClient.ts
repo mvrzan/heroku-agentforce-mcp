@@ -155,20 +155,17 @@ export class MCPClient {
             arguments: toolArgs,
           });
 
-          // Add the assistant's response (with tool use) to messages
           workingMessages.push({
             role: "assistant",
             content: response.content,
           });
 
-          // Add the tool result - extract text from MCP result content array
           let toolResultText = "";
           if (Array.isArray(result.content)) {
             toolResultText = result.content
               .map((item: any) => (item.type === "text" ? item.text : String(item)))
               .join("\n");
           } else {
-            console.log("content type", content.type);
             toolResultText = String(result.content);
           }
 
@@ -185,15 +182,12 @@ export class MCPClient {
 
           console.log(`${getCurrentTimestamp()} - 📝 MCPClient - Getting final response from Claude...`);
 
-          // Get final response from Claude with tool results - no tools to prevent additional calls
           response = await this.anthropic.messages.create({
             model: ANTHROPIC_CLAUDE_MODEL!,
             max_tokens: 1000,
             messages: workingMessages,
-            // Don't pass tools to prevent Claude from making additional tool calls
           });
 
-          // Add the final response text
           for (const finalContent of response.content) {
             if (finalContent.type === "text") {
               finalText.push(finalContent.text);
@@ -202,7 +196,6 @@ export class MCPClient {
         }
       }
 
-      // Update the persistent conversation history with the final working messages
       this.messages = workingMessages;
 
       return finalText.join("\n");
