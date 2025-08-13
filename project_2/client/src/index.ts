@@ -4,38 +4,18 @@ import { HTTPMCPClient } from "./utils/HTTPMCPClient.js";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { MessageParam, Tool } from "@anthropic-ai/sdk/resources/messages/messages.mjs";
 import readline from "readline/promises";
+import { ClientInstance, UnifiedTool, UnifiedResource } from "./utils/types.js";
+import { getCurrentTimestamp } from "./utils/loggingUtil.js";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_CLAUDE_MODEL = process.env.ANTHROPIC_CLAUDE_MODEL;
 
 if (!ANTHROPIC_API_KEY) {
-  throw new Error("ANTHROPIC_API_KEY is not set!");
+  throw new Error(`${getCurrentTimestamp()} - ❌ MCPClient - ANTHROPIC_API_KEY is not set!`);
 }
 
 if (!ANTHROPIC_CLAUDE_MODEL) {
-  throw new Error("ANTHROPIC_CLAUDE_MODEL is not set!");
-}
-
-interface ClientInstance {
-  type: "SSE" | "HTTP";
-  client: SSEMCPClient | HTTPMCPClient;
-  identifier: string;
-}
-
-interface UnifiedTool {
-  name: string;
-  description: string;
-  input_schema: any;
-  source: string;
-  client: SSEMCPClient | HTTPMCPClient;
-}
-
-interface UnifiedResource {
-  name: string;
-  description: string;
-  uri: string;
-  source: string;
-  client: SSEMCPClient | HTTPMCPClient;
+  throw new Error(`${getCurrentTimestamp()} - ❌ MCPClient - ANTHROPIC_CLAUDE_MODEL is not set!`);
 }
 
 class UnifiedMCPClient {
