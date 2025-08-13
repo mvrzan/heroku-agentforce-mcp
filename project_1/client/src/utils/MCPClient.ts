@@ -23,6 +23,7 @@ export class MCPClient {
   private anthropic: Anthropic;
   private transport: StdioClientTransport | SSEClientTransport | null = null;
   private tools: Tool[] = [];
+  private messages: MessageParam[] = []; // Add persistent conversation history
 
   constructor() {
     this.anthropic = new Anthropic({
@@ -90,8 +91,8 @@ export class MCPClient {
     let weatherData: WeatherDataset;
     let weatherInfo = "";
 
-    // Initialize messages array for Claude API
-    const messages: MessageParam[] = [];
+    // Create a working copy of messages for this query
+    const workingMessages: MessageParam[] = [...this.messages];
 
     // First, try to fetch the prompt from MCP server to use as system prompt
     try {
@@ -123,7 +124,7 @@ export class MCPClient {
 
             // Add the prompt messages first, then add the user query
             for (const promptMessage of promptResponse.messages) {
-              messages.push({
+              workingMessages.push({
                 role: promptMessage.role as "user" | "assistant", // Ensure correct type
                 content: promptMessage.content.type === "text" ? promptMessage.content.text : "",
               });
@@ -136,7 +137,7 @@ export class MCPClient {
     }
 
     // Add user query after any prompt messages
-    messages.push({
+    workingMessages.push({
       role: "user",
       content: query,
     });
@@ -169,8 +170,10 @@ export class MCPClient {
           // We'll leave the original query intact so Claude can choose to use the tools
 
           // Update message with tools note
-          const messageContent = messages[0].content;
-          messages[0].content = `${messageContent}\n\n(Note: You have access to weather tools that can provide real-time forecasts and alerts. Use them if the query requires current weather information.)`;
+          const messageContent = workingMessages[workingMessages.length - 1].content;
+          workingMessages[
+            workingMessages.length - 1
+          ].content = `${messageContent}\n\n(Note: You have access to weather tools that can provide real-time forecasts and alerts. Use them if the query requires current weather information.)`;
         }
         // Otherwise, check for historical/static weather data
         else if (resources.resources && resources.resources.length > 0) {
@@ -197,8 +200,10 @@ export class MCPClient {
                 }
 
                 // Add the relevant weather data to Claude's context
-                const messageContent = messages[0].content;
-                messages[0].content = `${messageContent}\n\nHere's the available historical weather data from the server:\n${weatherInfo}\n\nFull weather data JSON:\n${JSON.stringify(
+                const messageContent = workingMessages[workingMessages.length - 1].content;
+                workingMessages[
+                  workingMessages.length - 1
+                ].content = `${messageContent}\n\nHere's the available historical weather data from the server:\n${weatherInfo}\n\nFull weather data JSON:\n${JSON.stringify(
                   weatherData,
                   null,
                   2
@@ -222,7 +227,7 @@ export class MCPClient {
       let response = await this.anthropic.messages.create({
         model: ANTHROPIC_CLAUDE_MODEL!,
         max_tokens: 1500,
-        messages,
+        messages: workingMessages,
         tools: this.tools,
       });
 
@@ -237,39 +242,44 @@ export class MCPClient {
           const toolName = content.name;
           const toolArgs = content.input as { [x: string]: unknown } | undefined;
 
-          console.log(
-            `${getCurrentTimestamp()} - 🤖 MCPClient - Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}`
-          );
-
           const result = await this.mcp.callTool({
             name: toolName,
             arguments: toolArgs,
           });
 
           // Add the assistant's response (with tool use) to messages
-          messages.push({
+          workingMessages.push({
             role: "assistant",
             content: response.content,
           });
 
-          // Add the tool result
-          messages.push({
+          // Add the tool result - extract text from MCP result content array
+          let toolResultText = "";
+          if (Array.isArray(result.content)) {
+            toolResultText = result.content
+              .map((item: any) => (item.type === "text" ? item.text : String(item)))
+              .join("\n");
+          } else {
+            toolResultText = String(result.content);
+          }
+
+          workingMessages.push({
             role: "user",
             content: [
               {
                 type: "tool_result",
                 tool_use_id: content.id,
-                content: result.content as string,
+                content: toolResultText,
               },
             ],
           });
 
-          // Get next response from Claude with tool results
+          // Get final response from Claude with tool results - no tools to prevent additional calls
           response = await this.anthropic.messages.create({
             model: ANTHROPIC_CLAUDE_MODEL!,
             max_tokens: 1000,
-            messages,
-            tools: this.tools,
+            messages: workingMessages,
+            // Don't pass tools to prevent Claude from making additional tool calls
           });
 
           // Add the final response text
@@ -280,6 +290,9 @@ export class MCPClient {
           }
         }
       }
+
+      // Update the persistent conversation history with the final working messages
+      this.messages = workingMessages;
 
       return finalText.join("\n");
     } catch (error) {
