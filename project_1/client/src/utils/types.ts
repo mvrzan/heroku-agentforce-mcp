@@ -145,27 +145,3 @@ export interface RegionalClimateData {
     [timePeriod: string]: number;
   };
 }
-
-/**
- * Weather and climate dataset - Main interface for the entire data.json file
- */
-export interface WeatherDataset {
-  /** Climate change measurements and trends */
-  climateChange: ClimateChange;
-  /** List of significant extreme weather events */
-  extremeWeatherEvents: ExtremeWeatherEvent[];
-  /** History of significant droughts */
-  droughtHistory: {
-    [droughtName: string]: DroughtEvent;
-  };
-  /** Economic sectors sensitive to weather changes */
-  weatherSensitiveSectors: WeatherSensitiveSectors;
-  /** Historical climate data by US region */
-  historicalClimateByRegion: {
-    [region: string]: RegionalClimateData;
-  };
-  /** Last updated timestamp in ISO format */
-  lastUpdated: string;
-  /** Source of the climate and weather data */
-  dataSource: string;
-}
