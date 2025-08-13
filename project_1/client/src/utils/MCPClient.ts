@@ -21,9 +21,9 @@ if (!ANTHROPIC_CLAUDE_MODEL) {
 export class MCPClient {
   private mcp: Client;
   private anthropic: Anthropic;
-  private transport: StdioClientTransport | SSEClientTransport | null = null;
+  private transport: StdioClientTransport | null = null;
   private tools: Tool[] = [];
-  private messages: MessageParam[] = []; // Add persistent conversation history
+  private messages: MessageParam[] = [];
 
   constructor() {
     this.anthropic = new Anthropic({
@@ -34,26 +34,14 @@ export class MCPClient {
 
   async connectToServer(serverScriptPath: string) {
     try {
-      const isUrl = serverScriptPath.startsWith("http://") || serverScriptPath.startsWith("https://");
+      this.transport = new StdioClientTransport({
+        command: process.execPath,
+        args: [serverScriptPath],
+      });
+      this.mcp.connect(this.transport);
 
-      if (isUrl) {
-        // Use SSE transport for remote MCP server
-        this.transport = new SSEClientTransport(new URL(serverScriptPath));
-        this.mcp.connect(this.transport);
-      } else {
-        if (!serverScriptPath.endsWith(".js")) {
-          throw new Error("Server script must be a .js file or a valid URL");
-        }
-
-        this.transport = new StdioClientTransport({
-          command: process.execPath,
-          args: [serverScriptPath],
-        });
-        this.mcp.connect(this.transport);
-      }
-
-      // List available tools
       const toolsResult = await this.mcp.listTools();
+
       this.tools = toolsResult.tools.map((tool) => {
         return {
           name: tool.name,
@@ -61,17 +49,18 @@ export class MCPClient {
           input_schema: tool.inputSchema,
         };
       });
+
       console.log(
         `${getCurrentTimestamp()} - 🔌 MCPClient - Connected to server with tools:`,
         this.tools.map(({ name }) => name)
       );
 
-      // Check for available resources
-      const resources = await this.mcp.listResources();
-      if (resources.resources && resources.resources.length > 0) {
+      const mcpServerResources = await this.mcp.listResources();
+
+      if (mcpServerResources.resources && mcpServerResources.resources.length > 0) {
         console.log(
           `${getCurrentTimestamp()} - 🧰 MCPClient - Available resources:`,
-          resources.resources.map((resource) => resource.name).join(", ")
+          mcpServerResources.resources.map((mcpServerResource) => mcpServerResource.name).join(", ")
         );
       }
     } catch (error) {
@@ -81,54 +70,28 @@ export class MCPClient {
   }
 
   async processQuery(query: string) {
-    /**
-     * Process a query using Claude with available tools and resources
-     *
-     * @param query - The user's input query
-     * @returns Processed response as a string
-     */
     const weatherKeywords = ["weather", "climate", "temperature", "forecast", "climate change", "dataset"];
     let weatherData: WeatherDataset;
     let weatherInfo = "";
-
-    // Create a working copy of messages for this query
     const workingMessages: MessageParam[] = [...this.messages];
 
-    // First, try to fetch the prompt from MCP server to use as system prompt
     try {
+      console.log("\n");
       console.log(`${getCurrentTimestamp()} - 🔍 MCPClient - Discovering available prompts...`);
-
-      // Get list of available prompts
       const promptsList = await this.mcp.listPrompts();
 
       if (promptsList.prompts && promptsList.prompts.length > 0) {
-        console.log(`${getCurrentTimestamp()} - ✅ MCPClient - Found ${promptsList.prompts.length} prompts`);
+        const prompt = promptsList.prompts[0];
+        const promptResponse = await this.mcp.getPrompt({ name: prompt.name });
 
-        // Find the weather assistant prompt
-        const weatherPrompt = promptsList.prompts.find(
-          (p) => p.name === "weather-assistant" || (p.description && p.description.toLowerCase().includes("weather"))
-        );
+        if (promptResponse && promptResponse.messages) {
+          for (const promptMessage of promptResponse.messages) {
+            workingMessages.push({
+              role: promptMessage.role as "user" | "assistant",
+              content: promptMessage.content.type === "text" ? promptMessage.content.text : "",
+            });
 
-        if (weatherPrompt) {
-          console.log(`${getCurrentTimestamp()} - 📋 MCPClient - Found weather prompt: ${weatherPrompt.name}`);
-
-          // Get the specific prompt content
-          const promptResponse = await this.mcp.getPrompt({ name: weatherPrompt.name });
-
-          if (promptResponse && promptResponse.messages) {
-            console.log(
-              `${getCurrentTimestamp()} - 📚 MCPClient - Successfully retrieved prompt with ${
-                promptResponse.messages.length
-              } messages`
-            );
-
-            // Add the prompt messages first, then add the user query
-            for (const promptMessage of promptResponse.messages) {
-              workingMessages.push({
-                role: promptMessage.role as "user" | "assistant", // Ensure correct type
-                content: promptMessage.content.type === "text" ? promptMessage.content.text : "",
-              });
-            }
+            console.log(`${getCurrentTimestamp()} - ✅ MCPClient - Prompt added!`);
           }
         }
       }
@@ -136,7 +99,6 @@ export class MCPClient {
       console.error(`${getCurrentTimestamp()} - ⚠️ MCPClient - Failed to load prompt:`, error);
     }
 
-    // Add user query after any prompt messages
     workingMessages.push({
       role: "user",
       content: query,
@@ -305,6 +267,13 @@ export class MCPClient {
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
+    });
+
+    rl.on("SIGINT", () => {
+      console.log("\n");
+      console.log(`${getCurrentTimestamp()} - 🛑 MCPClient - Interrupted by user`);
+      rl.close();
+      process.exit(0);
     });
 
     try {
