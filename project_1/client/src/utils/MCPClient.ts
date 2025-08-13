@@ -139,25 +139,33 @@ export class MCPClient {
       });
 
       const finalText = [];
+      const toolCalls = [];
 
       for (const content of response.content) {
         if (content.type === "text") {
           finalText.push(content.text);
         } else if (content.type === "tool_use") {
-          // Execute tool call
-          const toolName = content.name;
-          const toolArgs = content.input as { [x: string]: unknown } | undefined;
+          toolCalls.push(content);
+        }
+      }
+
+      if (toolCalls.length > 0) {
+        workingMessages.push({
+          role: "assistant",
+          content: response.content,
+        });
+
+        const toolResults = [];
+
+        for (const toolCall of toolCalls) {
+          const toolName = toolCall.name;
+          const toolArgs = toolCall.input as { [x: string]: unknown } | undefined;
 
           console.log(`${getCurrentTimestamp()} - 🔧 MCPClient - Calling tool: ${toolName}`);
 
           const result = await this.mcp.callTool({
             name: toolName,
             arguments: toolArgs,
-          });
-
-          workingMessages.push({
-            role: "assistant",
-            content: response.content,
           });
 
           let toolResultText = "";
@@ -169,29 +177,29 @@ export class MCPClient {
             toolResultText = String(result.content);
           }
 
-          workingMessages.push({
-            role: "user",
-            content: [
-              {
-                type: "tool_result",
-                tool_use_id: content.id,
-                content: toolResultText,
-              },
-            ],
+          toolResults.push({
+            type: "tool_result" as const,
+            tool_use_id: toolCall.id,
+            content: toolResultText,
           });
+        }
 
-          console.log(`${getCurrentTimestamp()} - 📝 MCPClient - Getting final response from Claude...`);
+        workingMessages.push({
+          role: "user",
+          content: toolResults,
+        });
 
-          response = await this.anthropic.messages.create({
-            model: ANTHROPIC_CLAUDE_MODEL!,
-            max_tokens: 1000,
-            messages: workingMessages,
-          });
+        console.log(`${getCurrentTimestamp()} - 📝 MCPClient - Getting final response from Claude...`);
 
-          for (const finalContent of response.content) {
-            if (finalContent.type === "text") {
-              finalText.push(finalContent.text);
-            }
+        response = await this.anthropic.messages.create({
+          model: ANTHROPIC_CLAUDE_MODEL!,
+          max_tokens: 1000,
+          messages: workingMessages,
+        });
+
+        for (const finalContent of response.content) {
+          if (finalContent.type === "text") {
+            finalText.push(finalContent.text);
           }
         }
       }
