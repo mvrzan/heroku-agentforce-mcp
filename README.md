@@ -131,6 +131,7 @@ Client:
 ```
 cd heroku-mcp/project_1/client
 npm install
+npm run build
 ```
 
 Server:
@@ -138,6 +139,7 @@ Server:
 ```
 cd heroku-mcp/project_1/server
 npm install
+npm run build
 ```
 
 The second step is to create a `.env` file in the client folder. Find the `.env.example` file, copy it and rename it to `.env`.
