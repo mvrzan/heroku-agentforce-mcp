@@ -155,10 +155,10 @@ Edit the newly created `.env` file and update the variable with your Anthropic a
 
 ```
 ANTHROPIC_API_KEY=
-ANTHROPIC_CLAUDE_MODEL=claude-3-5-sonnet-20241022
+ANTHROPIC_CLAUDE_MODEL=claude-3-7-sonnet-20250219
 ```
 
-> The ANTHROPIC_CLAUDE_MODEL=claude-3-5-sonnet-20241022 value is already set, to the Claude 3.5 model, but you are welcome to change it.
+> The ANTHROPIC_CLAUDE_MODEL=claude-3-7-sonnet-20250219 value is already set, to the Claude 3.5 model, but you are welcome to change it.
 
 Once all of this is done, you are ready to run the application locally!
 
