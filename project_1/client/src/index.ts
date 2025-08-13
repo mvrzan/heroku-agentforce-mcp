@@ -17,6 +17,7 @@ async function main() {
     await mcpClient.chatLoop();
   } finally {
     await mcpClient.cleanup();
+    console.log(`${getCurrentTimestamp()} - 🎬 MCPClient Index - Closing out all connections!`);
 
     process.exit(0);
   }
