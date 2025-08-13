@@ -15,13 +15,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.56.0",
-    "@modelcontextprotocol/sdk": "^1.15.1",
-    "dotenv": "^17.2.0",
-    "tsx": "^4.20.3"
+    "@anthropic-ai/sdk": "^0.60.0",
+    "@modelcontextprotocol/sdk": "^1.17.2",
+    "dotenv": "^17.2.1",
+    "tsx": "^4.20.4"
   },
   "devDependencies": {
-    "@types/node": "^24.0.14",
-    "typescript": "^5.8.3"
+    "@types/node": "^24.2.1",
+    "typescript": "^5.9.2"
   }
 }
