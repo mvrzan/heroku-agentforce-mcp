@@ -168,9 +168,7 @@ export class MCPClient {
 
           let toolResultText = "";
           if (Array.isArray(result.content)) {
-            toolResultText = result.content
-              .map((item: any) => (item.type === "text" ? item.text : String(item)))
-              .join("\n");
+            toolResultText = result.content.map((item) => (item.type === "text" ? item.text : String(item))).join("\n");
           } else {
             toolResultText = String(result.content);
           }
