@@ -21,6 +21,7 @@ async function unifiedChatMode(unifiedClient: UnifiedMCPClient, rl: readline.Int
       .map((t) => `${t.name} (${t.source})`)
       .join(", ")}`
   );
+
   if (allResources.length > 0) {
     console.log(
       `${getCurrentTimestamp()} - 🧰 UnifiedMCPClient - Available resources: ${allResources
@@ -28,7 +29,6 @@ async function unifiedChatMode(unifiedClient: UnifiedMCPClient, rl: readline.Int
         .join(", ")}`
     );
   }
-  console.log();
 
   while (true) {
     const input = await rl.question("Query: ");
@@ -66,7 +66,6 @@ async function main() {
   });
 
   try {
-    // Setup phase - connect to servers
     await setupClients(clients, rl);
 
     if (clients.length === 0) {
@@ -74,7 +73,6 @@ async function main() {
       return;
     }
 
-    // Interactive phase - choose clients and send queries
     await interactiveMode(clients, rl);
   } finally {
     await cleanup(clients);
@@ -85,6 +83,7 @@ async function main() {
 
 async function cleanup(clients: ClientInstance[]) {
   console.log(`\n${getCurrentTimestamp()} - 🧹 UnifiedMCPClient - Cleaning up clients...`);
+
   for (const clientInstance of clients) {
     try {
       await clientInstance.client.cleanup();
@@ -124,7 +123,6 @@ async function setupClients(clients: ClientInstance[], rl: readline.Interface) {
 
       switch (choice) {
         case "1":
-          // SSE Server
           serverPath = await rl.question("Enter SSE server URL (e.g., http://localhost:3000/sse): ");
           if (!serverPath) {
             console.log(`${getCurrentTimestamp()} - ⚠️ UnifiedMCPClient - No URL provided, skipping.`);
@@ -135,7 +133,6 @@ async function setupClients(clients: ClientInstance[], rl: readline.Interface) {
           break;
 
         case "2":
-          // HTTP Server
           serverPath = await rl.question("Enter HTTP server URL (e.g., http://localhost:3000/mcp): ");
           if (!serverPath) {
             console.log(`${getCurrentTimestamp()} - ⚠️ UnifiedMCPClient - No URL provided, skipping.`);
@@ -155,7 +152,9 @@ async function setupClients(clients: ClientInstance[], rl: readline.Interface) {
 
       const identifier = `${type}-Client-${clientNumber}`;
       clients.push({ type, client, identifier });
+
       console.log(`${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Successfully connected ${identifier}`);
+
       clientNumber++;
     } catch (error) {
       console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Failed to connect client:`, error);
@@ -174,7 +173,6 @@ async function interactiveMode(clients: ClientInstance[], rl: readline.Interface
   console.log("The LLM can see and use tools from all servers automatically.");
   console.log();
 
-  // Create unified client that aggregates all tools and resources
   const unifiedClient = new UnifiedMCPClient(clients);
   await unifiedClient.initialize();
 
@@ -236,7 +234,6 @@ async function interactiveMode(clients: ClientInstance[], rl: readline.Interface
           break;
 
         default:
-          // Treat any other input as a direct query
           if (input.trim()) {
             console.log(`${getCurrentTimestamp()} - 🤖 UnifiedMCPClient - Processing query through unified client...`);
             const response = await unifiedClient.processQuery(input.trim());
