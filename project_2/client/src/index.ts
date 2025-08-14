@@ -97,38 +97,31 @@ class UnifiedMCPClient {
   async processQuery(query: string): Promise<string> {
     const workingMessages: MessageParam[] = [];
 
-    // Try to discover prompts from any connected client
     try {
       console.log(`${getCurrentTimestamp()} - 🔍 UnifiedMCPClient - Discovering available prompts...`);
 
       for (const clientInstance of this.clients) {
-        try {
-          const mcpClient = clientInstance.client.mcpClient;
-          const promptsList = await mcpClient.listPrompts();
+        const mcpClient = clientInstance.client.mcpClient;
+        const promptsList = await mcpClient.listPrompts();
 
-          if (promptsList.prompts && promptsList.prompts.length > 0) {
-            const prompt = promptsList.prompts[0];
-            const promptResponse = await mcpClient.getPrompt({ name: prompt.name });
+        if (promptsList.prompts && promptsList.prompts.length > 0) {
+          const prompt = promptsList.prompts[0];
+          const promptResponse = await mcpClient.getPrompt({ name: prompt.name });
 
-            if (promptResponse && promptResponse.messages) {
-              for (const promptMessage of promptResponse.messages) {
-                workingMessages.push({
-                  role: promptMessage.role as "user" | "assistant",
-                  content: promptMessage.content.type === "text" ? promptMessage.content.text : "",
-                });
-              }
-              console.log(
-                `${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Prompt added from ${clientInstance.identifier}!`
-              );
-              break; // Use the first prompt found
+          if (promptResponse && promptResponse.messages) {
+            for (const promptMessage of promptResponse.messages) {
+              workingMessages.push({
+                role: promptMessage.role as "user" | "assistant",
+                content: promptMessage.content.type === "text" ? promptMessage.content.text : "",
+              });
             }
+
+            console.log(
+              `${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Prompt added from ${clientInstance.identifier}!`
+            );
+
+            break;
           }
-        } catch (error) {
-          // Continue to next client if this one fails
-          console.error(
-            `${getCurrentTimestamp()} - ⚠️ UnifiedMCPClient - Failed to get prompt from ${clientInstance.identifier}:`,
-            error
-          );
         }
       }
     } catch (error) {
@@ -140,57 +133,43 @@ class UnifiedMCPClient {
       content: query,
     });
 
-    // Try to discover and add resource data from any connected client
     try {
       console.log(`${getCurrentTimestamp()} - 🔍 UnifiedMCPClient - Checking for available resources...`);
 
       for (const clientInstance of this.clients) {
-        try {
-          const mcpClient = clientInstance.client.mcpClient;
-          const resources = await mcpClient.listResources();
+        const mcpClient = clientInstance.client.mcpClient;
+        const resources = await mcpClient.listResources();
 
-          if (resources.resources && resources.resources.length > 0) {
-            const dataResource = resources.resources.find((resource) =>
-              resource.uri.toLowerCase().includes("data.json")
-            );
+        if (resources.resources && resources.resources.length > 0) {
+          const dataResource = resources.resources.find((resource) => resource.uri.toLowerCase().includes("data.json"));
 
-            if (dataResource) {
-              const content = await mcpClient.readResource({ uri: dataResource.uri });
+          if (dataResource) {
+            const content = await mcpClient.readResource({ uri: dataResource.uri });
 
-              if (content.contents && content.contents.length > 0) {
-                const contentText = typeof content.contents[0].text === "string" ? content.contents[0].text : "";
-                const resourceData = JSON.parse(contentText);
-                const resourceInfo = `Available data from MCP server (${dataResource.name}) on ${
-                  clientInstance.identifier
-                }:\n${Object.keys(resourceData)
-                  .map((key) => `- ${key}`)
-                  .join("\n")}`;
+            if (content.contents && content.contents.length > 0) {
+              const contentText = typeof content.contents[0].text === "string" ? content.contents[0].text : "";
+              const resourceData = JSON.parse(contentText);
+              const resourceInfo = `Available data from MCP server (${dataResource.name}) on ${
+                clientInstance.identifier
+              }:\n${Object.keys(resourceData)
+                .map((key) => `- ${key}`)
+                .join("\n")}`;
 
-                const messageContent = workingMessages[workingMessages.length - 1].content;
-                workingMessages[
-                  workingMessages.length - 1
-                ].content = `${messageContent}\n\n${resourceInfo}\n\nFull data:\n${JSON.stringify(
-                  resourceData,
-                  null,
-                  2
-                )}`;
+              const messageContent = workingMessages[workingMessages.length - 1].content;
+              workingMessages[
+                workingMessages.length - 1
+              ].content = `${messageContent}\n\n${resourceInfo}\n\nFull data:\n${JSON.stringify(
+                resourceData,
+                null,
+                2
+              )}`;
 
-                console.log(
-                  `${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Resource data added from ${
-                    clientInstance.identifier
-                  }`
-                );
-                break; // Use the first resource found
-              }
+              console.log(
+                `${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Resource data added from ${clientInstance.identifier}`
+              );
+              break; // Use the first resource found
             }
           }
-        } catch (error) {
-          console.error(
-            `${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Error reading resource from ${
-              clientInstance.identifier
-            }:`,
-            error
-          );
         }
       }
     } catch (error) {
