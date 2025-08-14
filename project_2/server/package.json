@@ -7,14 +7,10 @@
     "weather": "./build/index.js"
   },
   "scripts": {
-    "dev": "tsx src/index.ts",
-    "dev:sse": "tsx src/sse-server.ts",
-    "dev:http": "tsx src/http-server.ts",
+    "dev": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\" && tsx src/index.ts",
     "watch": "tsc --watch",
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "start": "node build/index.js",
-    "start:sse": "node build/sse-server.js",
-    "start:http": "node build/http-server.js",
     "inspector": "npx @modelcontextprotocol/inspector node build/index.js"
   },
   "files": [
