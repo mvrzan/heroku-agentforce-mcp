@@ -167,7 +167,7 @@ class UnifiedMCPClient {
               console.log(
                 `${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Resource data added from ${clientInstance.identifier}`
               );
-              break; // Use the first resource found
+              break;
             }
           }
         }
@@ -177,7 +177,6 @@ class UnifiedMCPClient {
     }
 
     try {
-      // Convert unified tools to Anthropic format
       const tools: Tool[] = this.unifiedTools.map((tool) => ({
         name: tool.name,
         description: `${tool.description} (from ${tool.source})`,
@@ -217,9 +216,8 @@ class UnifiedMCPClient {
         for (const toolCall of toolCalls) {
           const toolName = toolCall.name;
           const toolArgs = toolCall.input as { [x: string]: unknown } | undefined;
-
-          // Find the unified tool and its source client
           const unifiedTool = this.unifiedTools.find((t) => t.name === toolName);
+
           if (!unifiedTool) {
             console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Tool ${toolName} not found`);
             toolResults.push({
@@ -227,6 +225,7 @@ class UnifiedMCPClient {
               tool_use_id: toolCall.id,
               content: `Error: Tool ${toolName} not found`,
             });
+
             continue;
           }
 
@@ -234,7 +233,6 @@ class UnifiedMCPClient {
             `${getCurrentTimestamp()} - 🔧 UnifiedMCPClient - Calling tool ${toolName} on ${unifiedTool.source}`
           );
 
-          // Call the tool on the appropriate client
           const mcpClient = unifiedTool.client.mcpClient;
           const result = await mcpClient.callTool({
             name: toolName,
@@ -242,6 +240,7 @@ class UnifiedMCPClient {
           });
 
           let toolResultText = "";
+
           if (Array.isArray(result.content)) {
             toolResultText = result.content
               .map((item: any) => (item.type === "text" ? item.text : String(item)))
@@ -264,14 +263,12 @@ class UnifiedMCPClient {
 
         console.log(`${getCurrentTimestamp()} - 📝 UnifiedMCPClient - Getting final response from Claude...`);
 
-        // Get next response from Claude with tool results
         response = await this.anthropic.messages.create({
           model: ANTHROPIC_CLAUDE_MODEL!,
           max_tokens: 1000,
           messages: workingMessages,
         });
 
-        // Add the final response text
         for (const finalContent of response.content) {
           if (finalContent.type === "text") {
             finalText.push(finalContent.text);
