@@ -5,6 +5,7 @@ import { AlertFeature, AlertsResponse, PointsResponse, ForecastPeriod, ForecastR
 import { getCurrentTimestamp } from "./loggingUtil.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { file } from "zod/v4";
 
 const USER_AGENT = process.env.WEATHER_USER_AGENT!;
 const NWS_API_BASE = process.env.USA_WEATHER_API!;
@@ -207,7 +208,8 @@ function createWeatherServer(transportType: string) {
       },
       async (uri) => {
         try {
-          const filePath = path.resolve(__dirname, "..", "src", "data", "data.json");
+          const filePath = path.resolve(__dirname, "..", "data", "data.json");
+
           console.error(
             `${getCurrentTimestamp()} - 🔍 ${transportType} server - Looking for data file at: ${filePath}`
           );
