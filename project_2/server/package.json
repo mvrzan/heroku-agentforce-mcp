@@ -10,7 +10,7 @@
     "dev": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\" && tsx src/index.ts",
     "watch": "tsc --watch",
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
-    "start": "node build/index.js",
+    "start": "tsx src/index.ts",
     "inspector": "npx @modelcontextprotocol/inspector node build/index.js"
   },
   "files": [
