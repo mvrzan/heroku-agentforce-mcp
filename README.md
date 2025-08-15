@@ -26,6 +26,11 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
         - [Development](#development)
   - [Project 2: Local MCP Client and Heroku MCP Server](#project-2-local-mcp-client-and-heroku-mcp-server)
     - [Technologies used](#technologies-used-1)
+    - [Configuration](#configuration-1)
+      - [Requirements](#requirements-1)
+      - [Setup](#setup-1)
+        - [Local environment configuration](#local-environment-configuration-1)
+        - [Development](#development-1)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
   - [Project 4: Agentforce and Heroku MCP Servicer (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-servicer-native-agentforce-mcp-client)
 - [License](#license)
@@ -216,6 +221,76 @@ This setup demonstrates how a single host application can instantiate multiple M
 - [Express](https://expressjs.com/)
 - [Model Context Protocol](https://github.com/modelcontextprotocol/typescript-sdk)
 - [Heroku](https://www.heroku.com/)
+
+### Configuration
+
+#### Requirements
+
+TODO: Update requirements to include weatherapi API
+TODO: Update the .env instructions for the server file
+
+To run this application locally, you will need the following:
+
+- An Anthropic [account](https://www.anthropic.com/) with a paid subscription to get an API key
+- Node.js version 20 or later installed (type `node -v` in your terminal to check). Follow [instructions](https://nodejs.org/en/download) if you don't have node installed
+- npm version 10.0.0 or later installed (type `npm -v` in your terminal to check). Node.js includes `npm`
+- git installed. Follow the instructions to [install git](https://git-scm.com/downloads)
+- A [Heroku account](https://signup.heroku.com/)
+
+#### Setup
+
+###### Local environment configuration
+
+The first step is to clone the repository and install the project dependencies for both server and client folders via a terminal interface by running the `npm install` in the proper folder:
+
+Client:
+
+```
+cd heroku-mcp/project_2/client
+npm install
+npm run build
+```
+
+Server:
+
+```
+cd heroku-mcp/project_2/server
+npm install
+npm run build
+```
+
+The second step is to create a `.env` file in the client folder. Find the `.env.example` file, copy it and rename it to `.env`.
+
+Client:
+
+```
+cd heroku-mcp/project_2/client
+cp .env.example .env
+```
+
+Edit the newly created `.env` file and update the variable with your Anthropic account API key information:
+
+```
+ANTHROPIC_API_KEY=
+ANTHROPIC_CLAUDE_MODEL=claude-3-7-sonnet-20250219
+```
+
+> The ANTHROPIC_CLAUDE_MODEL=claude-3-7-sonnet-20250219 value is already set, to the Claude 3.5 model, but you are welcome to change it.
+
+Once all of this is done, you are ready to run the application locally!
+
+##### Development
+
+To run the application locally, use the command line, navigate to the `client` folder, ensure the dependencies are installed properly, and run the following:
+
+```
+cd heroku-mcp/project_2/client
+npm run dev
+```
+
+This will automatically run the Node script and you will be able to write prompts directly in your Command Line Interface.
+
+When you make changes to your code, the server will automatically restart to fetch new changes.
 
 ## Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)
 
