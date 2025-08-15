@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx src/index.ts ../server/build/index.js",
+    "dev": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\" && tsx src/index.ts ../server/build/index.js",
     "watch": "tsc --watch",
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "inspector": "npx @modelcontextprotocol/inspector node build/index.js",
