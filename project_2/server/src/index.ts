@@ -9,7 +9,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { getCurrentTimestamp } from "./utils/loggingUtil.js";
-import { AlertFeature, AlertsResponse, PointsResponse, ForecastPeriod, ForecastResponse } from "./utils/helpers.js";
+import { AlertFeature, AlertsResponse, PointsResponse, ForecastPeriod, ForecastResponse } from "./utils/types.js";
 
 const USER_AGENT = "weather-app/1.0";
 const NWS_API_BASE = "https://api.weather.gov";
