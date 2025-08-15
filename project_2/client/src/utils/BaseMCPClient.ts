@@ -36,12 +36,21 @@ export abstract class BaseMCPClient {
       this.tools.map(({ name }) => name)
     );
 
-    const resources = await this.mcp.listResources();
-    if (resources.resources && resources.resources.length > 0) {
-      console.log(
-        `${getCurrentTimestamp()} - 🧰 ${this.clientType}MCPClient - Available resources:`,
-        resources.resources.map((resource) => resource.name).join(", ")
-      );
+    try {
+      const resources = await this.mcp?.listResources();
+
+      if (resources.resources && resources.resources.length > 0) {
+        console.log(
+          `${getCurrentTimestamp()} - 🧰 ${this.clientType}MCPClient - Available resources:`,
+          resources.resources.map((resource) => resource.name).join(", ")
+        );
+      }
+    } catch (error: any) {
+      if (error?.code === -32601) {
+        console.log(`${getCurrentTimestamp()} - ℹ️ ${this.clientType}MCPClient - Server does not support resources`);
+      } else {
+        console.error(`${getCurrentTimestamp()} - ❌ ${this.clientType}MCPClient - Error listing resources:`, error);
+      }
     }
   }
 
