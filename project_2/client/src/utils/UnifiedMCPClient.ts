@@ -53,20 +53,28 @@ export class UnifiedMCPClient {
           });
         });
 
-        const resourcesResult = await mcpClient.listResources();
-        const clientResources = resourcesResult.resources || [];
+        try {
+          const resourcesResult = await mcpClient.listResources();
+          const clientResources = resourcesResult.resources || [];
 
-        clientResources.forEach((resource) => {
-          this.unifiedResources.push({
-            name: resource.name || "Unknown Resource",
-            description: resource.description || "No description",
-            uri: resource.uri || "",
-            source: clientInstance.identifier,
-            client: clientInstance.client,
+          clientResources.forEach((resource) => {
+            this.unifiedResources.push({
+              name: resource.name || "Unknown Resource",
+              description: resource.description || "No description",
+              uri: resource.uri || "",
+              source: clientInstance.identifier,
+              client: clientInstance.client,
+            });
           });
-        });
 
-        console.log(`${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Integrated ${clientInstance.identifier}`);
+          console.log(`${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Integrated ${clientInstance.identifier}`);
+        } catch (error: any) {
+          if (error?.code === -32601) {
+            console.log(`${getCurrentTimestamp()} - ℹ️ MCPClient - Server does not support resources`);
+          } else {
+            console.error(`${getCurrentTimestamp()} - ❌ MCPClient - Error listing resources:`, error);
+          }
+        }
       } catch (error) {
         console.error(
           `${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Failed to integrate ${clientInstance.identifier}:`,
@@ -130,35 +138,44 @@ export class UnifiedMCPClient {
 
       for (const clientInstance of this.clients) {
         const mcpClient = clientInstance.client.mcpClient;
-        const resources = await mcpClient.listResources();
 
-        if (!resources.resources || !(resources.resources.length > 0)) break;
+        try {
+          const resources = await mcpClient.listResources();
 
-        const dataResource = resources.resources.find((resource) => resource.uri.toLowerCase().includes("data.json"));
+          if (!resources.resources || !(resources.resources.length > 0)) break;
 
-        if (!dataResource) break;
+          const dataResource = resources.resources.find((resource) => resource.uri.toLowerCase().includes("data.json"));
 
-        const content = await mcpClient.readResource({ uri: dataResource.uri });
+          if (!dataResource) break;
 
-        if (!content.contents || !(content.contents.length > 0)) break;
+          const content = await mcpClient.readResource({ uri: dataResource.uri });
 
-        const contentText = typeof content.contents[0].text === "string" ? content.contents[0].text : "";
-        const resourceData = JSON.parse(contentText);
-        const resourceInfo = `Available data from MCP server (${dataResource.name}) on ${
-          clientInstance.identifier
-        }:\n${Object.keys(resourceData)
-          .map((key) => `- ${key}`)
-          .join("\n")}`;
+          if (!content.contents || !(content.contents.length > 0)) break;
 
-        const messageContent = workingMessages[workingMessages.length - 1].content;
-        workingMessages[
-          workingMessages.length - 1
-        ].content = `${messageContent}\n\n${resourceInfo}\n\nFull data:\n${JSON.stringify(resourceData, null, 2)}`;
+          const contentText = typeof content.contents[0].text === "string" ? content.contents[0].text : "";
+          const resourceData = JSON.parse(contentText);
+          const resourceInfo = `Available data from MCP server (${dataResource.name}) on ${
+            clientInstance.identifier
+          }:\n${Object.keys(resourceData)
+            .map((key) => `- ${key}`)
+            .join("\n")}`;
 
-        console.log(
-          `${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Resource data added from ${clientInstance.identifier}`
-        );
-        break;
+          const messageContent = workingMessages[workingMessages.length - 1].content;
+          workingMessages[
+            workingMessages.length - 1
+          ].content = `${messageContent}\n\n${resourceInfo}\n\nFull data:\n${JSON.stringify(resourceData, null, 2)}`;
+
+          console.log(
+            `${getCurrentTimestamp()} - ✅ UnifiedMCPClient - Resource data added from ${clientInstance.identifier}`
+          );
+          break;
+        } catch (error: any) {
+          if (error?.code === -32603 || error?.code === -32601) {
+            console.log(`${getCurrentTimestamp()} - ℹ️ MCPClient - Server does not support resources`);
+          } else {
+            console.error(`${getCurrentTimestamp()} - ❌ MCPClient - Error listing resources:`, error);
+          }
+        }
       }
     } catch (error) {
       console.error(`${getCurrentTimestamp()} - ❌ UnifiedMCPClient - Error fetching resources:`, error);
