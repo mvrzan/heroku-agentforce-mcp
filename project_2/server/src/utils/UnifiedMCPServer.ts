@@ -8,15 +8,11 @@ import { AlertsResponse, PointsResponse, ForecastPeriod, ForecastResponse, Weath
 import { makeNWSRequest, makeWeatherAPIRequest, formatAlert } from "./helpers.js";
 
 const WEATHERAPI_KEY = process.env.WEATHERAPI_KEY!;
-const WEATHERAPI_URL = process.env.WEATHERAPI_URL;
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 if (!WEATHERAPI_KEY) {
   throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - WEATHERAPI_KEY is not set!`);
-}
-
-if (!WEATHERAPI_URL) {
-  throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - WEATHERAPI_URL is not set!`);
 }
 
 function unifiedMCPServer(transportType: string) {
@@ -304,9 +300,7 @@ Remember to format your responses clearly with appropriate sections for readabil
             query = `${location},Canada`;
           }
 
-          const weatherUrl = `${
-            process.env.WEATHERAPI_URL
-          }/v1/current.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(query)}`;
+          const weatherUrl = `v1/current.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(query)}`;
 
           console.error(
             `${getCurrentTimestamp()} - 🌡️ ${transportType} server - Fetching Canadian weather from WeatherAPI: ${query}`
@@ -388,7 +382,7 @@ Remember to format your responses clearly with appropriate sections for readabil
           }
 
           const forecastDays = Math.min(Math.max(days, 1), 3); // Clamp between 1-3
-          const forecastUrl = `https://api.weatherapi.com/v1/forecast.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(
+          const forecastUrl = `v1/forecast.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(
             query
           )}&days=${forecastDays}`;
 
@@ -465,9 +459,7 @@ Remember to format your responses clearly with appropriate sections for readabil
       async ({ query }) => {
         try {
           // Use WeatherAPI's search endpoint to find matching locations
-          const searchUrl = `https://api.weatherapi.com/v1/search.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(
-            query
-          )}`;
+          const searchUrl = `v1/search.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(query)}`;
 
           console.error(
             `${getCurrentTimestamp()} - 🔍 ${transportType} server - Searching Canadian locations: ${query}`
