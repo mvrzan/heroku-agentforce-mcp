@@ -2,7 +2,7 @@ import { getCurrentTimestamp } from "../utils/loggingUtil.js";
 import { Request, Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { randomUUID } from "crypto";
-import createWeatherServer from "../utils/UnifiedMCPServer.js";
+import unifiedMCPServer from "../utils/UnifiedMCPServer.js";
 
 const httpTransports: Record<string, StreamableHTTPServerTransport> = {};
 
@@ -23,13 +23,11 @@ export const HTTPFunction = async (req: Request, res: Response) => {
     let transport: StreamableHTTPServerTransport;
 
     if (sessionId && httpTransports[sessionId]) {
-      // Reuse existing transport
       transport = httpTransports[sessionId];
       console.error(
         `${getCurrentTimestamp()} - 🔄 Unified server - Reusing existing HTTP transport for session: ${sessionId}`
       );
     } else if (!sessionId && isInitializeRequest(req.body)) {
-      // New initialization request
       console.error(`${getCurrentTimestamp()} - 🆕 Unified server - Creating new HTTP transport for initialization`);
 
       transport = new StreamableHTTPServerTransport({
@@ -42,7 +40,6 @@ export const HTTPFunction = async (req: Request, res: Response) => {
         },
       });
 
-      // Set up onclose handler to clean up transport when closed
       transport.onclose = () => {
         const sid = transport.sessionId;
         if (sid && httpTransports[sid]) {
@@ -53,8 +50,8 @@ export const HTTPFunction = async (req: Request, res: Response) => {
         }
       };
 
-      // Connect the transport to a new MCP server instance BEFORE handling the request
-      const server = createWeatherServer("HTTP");
+      const server = unifiedMCPServer("HTTP");
+
       try {
         await server.connect(transport);
         console.error(
@@ -69,9 +66,8 @@ export const HTTPFunction = async (req: Request, res: Response) => {
       }
 
       await transport.handleRequest(req, res, req.body);
-      return; // Already handled
+      return;
     } else {
-      // Invalid request - no session ID or not initialization request
       console.error(
         `${getCurrentTimestamp()} - ❌ Unified server - Invalid HTTP request: no session ID and not initialization`
       );
@@ -86,7 +82,6 @@ export const HTTPFunction = async (req: Request, res: Response) => {
       return;
     }
 
-    // Handle the request with existing transport
     await transport.handleRequest(req, res, req.body);
   } catch (error) {
     console.error(`${getCurrentTimestamp()} - ❌ Unified server - Error handling HTTP request:`, error);
