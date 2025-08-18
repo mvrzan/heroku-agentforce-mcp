@@ -9,7 +9,25 @@ export class HTTPMCPClient extends BaseMCPClient {
 
   async connectToServer(serverUrl: string): Promise<void> {
     try {
-      this.transport = new StreamableHTTPClientTransport(new URL(serverUrl));
+      if (!serverUrl.startsWith("http://") && !serverUrl.startsWith("https://")) {
+        throw new Error(
+          `${getCurrentTimestamp()} - ❌ SSEMCPClient - SSE server URL must start with http:// or https://`
+        );
+      }
+
+      const headers: Record<string, string> = {};
+      const mcpApiKey = process.env.MCP_CLIENT_API_KEY;
+
+      if (mcpApiKey) {
+        headers["Authorization"] = `Bearer ${mcpApiKey}`;
+        console.log(`${getCurrentTimestamp()} - 🔑 HTTPMCPClient - Using API key authentication`);
+      }
+
+      this.transport = new StreamableHTTPClientTransport(new URL(serverUrl), {
+        requestInit: {
+          headers,
+        },
+      });
       await this.initializeConnection(serverUrl);
     } catch (error) {
       console.error(`${getCurrentTimestamp()} - ❌ HTTPMCPClient - Failed to connect to HTTP server:`, error);
