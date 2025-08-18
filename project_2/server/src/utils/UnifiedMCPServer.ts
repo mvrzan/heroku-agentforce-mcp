@@ -4,16 +4,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { getCurrentTimestamp } from "./loggingUtil.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { AlertsResponse, PointsResponse, ForecastPeriod, ForecastResponse, WeatherAPIResponse } from "./types.js";
-import { makeNWSRequest, makeWeatherAPIRequest, formatAlert } from "./helpers.js";
-
-const WEATHERAPI_KEY = process.env.WEATHERAPI_KEY!;
+import { AlertsResponse, PointsResponse, ForecastPeriod, ForecastResponse } from "./types.js";
+import { makeNWSRequest, formatAlert, getCurrentWeatherCanada, getForecastCanada } from "./helpers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-if (!WEATHERAPI_KEY) {
-  throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - WEATHERAPI_KEY is not set!`);
-}
 
 function unifiedMCPServer(transportType: string) {
   const server = new McpServer({
@@ -290,23 +284,13 @@ Remember to format your responses clearly with appropriate sections for readabil
       },
       async ({ location, province }) => {
         try {
-          // Build the WeatherAPI query
-          let query = location;
-          if (province && !location.includes(",")) {
-            // If it's not coordinates and province is specified, add it to the query
-            query = `${location},${province},Canada`;
-          } else if (!location.includes(",")) {
-            // If it's not coordinates, ensure we specify Canada
-            query = `${location},Canada`;
-          }
-
-          const weatherUrl = `v1/current.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(query)}`;
-
           console.error(
-            `${getCurrentTimestamp()} - 🌡️ ${transportType} server - Fetching Canadian weather from WeatherAPI: ${query}`
+            `${getCurrentTimestamp()} - 🌡️ ${transportType} server - Fetching Canadian weather from WeatherAPI: ${location}${
+              province ? `, ${province}` : ""
+            }`
           );
 
-          const weatherData = await makeWeatherAPIRequest<WeatherAPIResponse>(weatherUrl);
+          const weatherData = await getCurrentWeatherCanada(location, province);
 
           if (!weatherData) {
             return {
@@ -373,24 +357,13 @@ Remember to format your responses clearly with appropriate sections for readabil
       },
       async ({ location, province, days }) => {
         try {
-          // Build the WeatherAPI query
-          let query = location;
-          if (province && !location.includes(",")) {
-            query = `${location},${province},Canada`;
-          } else if (!location.includes(",")) {
-            query = `${location},Canada`;
-          }
-
-          const forecastDays = Math.min(Math.max(days, 1), 3); // Clamp between 1-3
-          const forecastUrl = `v1/forecast.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(
-            query
-          )}&days=${forecastDays}`;
-
           console.error(
-            `${getCurrentTimestamp()} - 📊 ${transportType} server - Fetching Canadian forecast from WeatherAPI: ${query} (${forecastDays} days)`
+            `${getCurrentTimestamp()} - 📊 ${transportType} server - Fetching Canadian forecast from WeatherAPI: ${location}${
+              province ? `, ${province}` : ""
+            } (${days} days)`
           );
 
-          const forecastData = await makeWeatherAPIRequest<WeatherAPIResponse>(forecastUrl);
+          const forecastData = await getForecastCanada(location, province, days);
 
           if (!forecastData || !forecastData.forecast) {
             return {
@@ -406,6 +379,7 @@ Remember to format your responses clearly with appropriate sections for readabil
           }
 
           const { location: loc, forecast } = forecastData;
+          const forecastDays = Math.min(Math.max(days || 3, 1), 3);
 
           let forecastText = `${forecastDays}-Day Weather Forecast for ${loc.name}, ${loc.region}, ${loc.country}\n\n`;
           forecastText += `Location: ${loc.lat}, ${loc.lon}\n`;
@@ -443,94 +417,6 @@ Remember to format your responses clearly with appropriate sections for readabil
               {
                 type: "text",
                 text: `Failed to retrieve Canadian forecast for "${location}". Please try again with a specific Canadian city name or coordinates.`,
-              },
-            ],
-          };
-        }
-      }
-    );
-
-    server.tool(
-      "search-canada-locations",
-      "Search for Canadian locations to get weather data",
-      {
-        query: z.string().describe("Location name to search for in Canada"),
-      },
-      async ({ query }) => {
-        try {
-          // Use WeatherAPI's search endpoint to find matching locations
-          const searchUrl = `v1/search.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(query)}`;
-
-          console.error(
-            `${getCurrentTimestamp()} - 🔍 ${transportType} server - Searching Canadian locations: ${query}`
-          );
-
-          const searchData = await makeWeatherAPIRequest<
-            Array<{
-              id: number;
-              name: string;
-              region: string;
-              country: string;
-              lat: number;
-              lon: number;
-              url: string;
-            }>
-          >(searchUrl);
-
-          if (!searchData || searchData.length === 0) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `No locations found matching "${query}". Please try a different search term or check the spelling.`,
-                },
-              ],
-            };
-          }
-
-          // Filter for Canadian locations
-          const canadianLocations = searchData.filter((loc) => loc.country.toLowerCase().includes("canada"));
-
-          if (canadianLocations.length === 0) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `No Canadian locations found matching "${query}". Found ${searchData.length} location(s) but none in Canada.`,
-                },
-              ],
-            };
-          }
-
-          let locationsText = `Found ${canadianLocations.length} Canadian location(s) matching "${query}":\n\n`;
-
-          canadianLocations.forEach((loc, index) => {
-            locationsText += `${index + 1}. ${loc.name}, ${loc.region}\n`;
-            locationsText += `   Country: ${loc.country}\n`;
-            locationsText += `   Coordinates: ${loc.lat}, ${loc.lon}\n`;
-            locationsText += `   Location ID: ${loc.id}\n\n`;
-          });
-
-          locationsText += `You can use any of these location names with the get-canada-current-weather or get-canada-forecast tools.`;
-
-          return {
-            content: [
-              {
-                type: "text",
-                text: locationsText,
-              },
-            ],
-          };
-        } catch (error) {
-          console.error(
-            `${getCurrentTimestamp()} - ❌ ${transportType} server - Error searching Canadian locations:`,
-            error
-          );
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Failed to search for locations matching "${query}". Please try again.`,
               },
             ],
           };
