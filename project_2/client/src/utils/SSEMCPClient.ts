@@ -15,7 +15,20 @@ export class SSEMCPClient extends BaseMCPClient {
         );
       }
 
-      this.transport = new SSEClientTransport(new URL(serverUrl));
+      const headers: Record<string, string> = {};
+      const mcpApiKey = process.env.MCP_CLIENT_API_KEY;
+
+      if (mcpApiKey) {
+        headers["Authorization"] = `Bearer ${mcpApiKey}`;
+        console.log(`${getCurrentTimestamp()} - 🔑 SSEMCPClient - Using API key authentication`);
+      }
+
+      this.transport = new SSEClientTransport(new URL(serverUrl), {
+        requestInit: {
+          headers,
+        },
+      });
+
       await this.initializeConnection(serverUrl);
     } catch (error) {
       console.error(`${getCurrentTimestamp()} - ❌ SSEMCPClient - Failed to connect to SSE server:`, error);
