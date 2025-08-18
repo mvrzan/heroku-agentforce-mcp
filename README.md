@@ -31,6 +31,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
       - [Setup](#setup-1)
         - [Local environment configuration](#local-environment-configuration-1)
         - [Development](#development-1)
+      - [Deployment](#deployment)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
   - [Project 4: Agentforce and Heroku MCP Servicer (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-servicer-native-agentforce-mcp-client)
 - [License](#license)
@@ -303,6 +304,14 @@ npm run dev
 This will automatically run the Node script and you will be able to write prompts directly in your Command Line Interface.
 
 When you make changes to your code, the server will automatically restart to fetch new changes.
+
+#### Deployment
+
+Once you are happy with your application, you can deploy it to Heroku!
+
+To deploy the application to Heroku, please follow the [official instructions](https://devcenter.heroku.com/articles/git).
+
+> NOTE: If you want to deploy this application to Heroku, you will have to create all of the above variables as Heroku environment variables. This can be done via the [command line or the Heroku Dashboard UI](https://devcenter.heroku.com/articles/config-vars).
 
 ## Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)
 
