@@ -1,5 +1,5 @@
 import { getCurrentTimestamp } from "./loggingUtil.js";
-import { AlertFeature } from "./types.js";
+import { AlertFeature, WeatherAPIResponse } from "./types.js";
 
 export async function makeNWSRequest<T>(url: string): Promise<T | null> {
   try {
@@ -41,6 +41,7 @@ export async function makeWeatherAPIRequest<T>(url: string): Promise<T | null> {
     if (!USER_AGENT) {
       throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - USER_AGENT is not set!`);
     }
+
     const response = await fetch(url, {
       headers: {
         Accept: "application/json",
@@ -57,6 +58,51 @@ export async function makeWeatherAPIRequest<T>(url: string): Promise<T | null> {
     console.error("Error making WeatherAPI request:", error);
     return null;
   }
+}
+
+export async function getCurrentWeatherCanada(location: string, province?: string): Promise<WeatherAPIResponse | null> {
+  const WEATHERAPI_KEY = process.env.WEATHERAPI_KEY!;
+
+  if (!WEATHERAPI_KEY) {
+    throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - WEATHERAPI_KEY is not set!`);
+  }
+
+  let query = location;
+  if (province && !location.includes(",")) {
+    query = `${location},${province},Canada`;
+  } else if (!location.includes(",")) {
+    query = `${location},Canada`;
+  }
+
+  const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(query)}`;
+
+  return makeWeatherAPIRequest(url);
+}
+
+export async function getForecastCanada(
+  location: string,
+  province?: string,
+  days: number = 3
+): Promise<WeatherAPIResponse | null> {
+  const WEATHERAPI_KEY = process.env.WEATHERAPI_KEY!;
+
+  if (!WEATHERAPI_KEY) {
+    throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - WEATHERAPI_KEY is not set!`);
+  }
+
+  let query = location;
+  if (province && !location.includes(",")) {
+    query = `${location},${province},Canada`;
+  } else if (!location.includes(",")) {
+    query = `${location},Canada`;
+  }
+
+  const forecastDays = Math.min(Math.max(days, 1), 3); // Clamp between 1-3
+  const url = `https://api.weatherapi.com/v1/forecast.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(
+    query
+  )}&days=${forecastDays}`;
+
+  return makeWeatherAPIRequest(url);
 }
 
 export function formatAlert(feature: AlertFeature): string {
