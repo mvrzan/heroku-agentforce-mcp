@@ -180,6 +180,7 @@ function unifiedMCPServer(transportType: string) {
           }
 
           const content = fs.readFileSync(filePath, "utf-8");
+
           console.error(
             `${getCurrentTimestamp()} - ✅ ${transportType} server - Successfully read JSON data (${
               content.length
@@ -225,8 +226,6 @@ function unifiedMCPServer(transportType: string) {
 **Canadian Weather (via WeatherAPI.com):**
 1. Current weather conditions for Canadian cities and locations
 2. Weather forecasts (1-3 days) for Canadian locations
-3. Location search to find Canadian cities and coordinates
-4. Real-time weather data with comprehensive details
 
 **General Climate Data:**
 - Historical climate information from the server data file
@@ -234,17 +233,16 @@ function unifiedMCPServer(transportType: string) {
 - Long-term climate projections
 
 When responding to users:
-- For Canadian locations, use the Canadian weather tools (get-canada-current-weather, get-canada-forecast, search-canada-locations)
+- For Canadian locations, use the Canadian weather tools (get-canada-current-weather, get-canada-forecast)
 - For historical climate data, reference the weather-data resource
 - Use a friendly, conversational tone
 - Always specify temperature units (°C for Canada)
 - Format alerts and warnings prominently
-- If location is ambiguous, ask for clarification or use search-canada-locations
+- If location is ambiguous, ask for clarification
 
 Available Canadian weather tools:
 - get-canada-current-weather: Current conditions for any Canadian city
 - get-canada-forecast: 1-3 day forecasts for Canadian locations
-- search-canada-locations: Find Canadian cities and their coordinates
 
 Note: US weather data (NWS) is only available via SSE transport.
 
