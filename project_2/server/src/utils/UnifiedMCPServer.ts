@@ -1,59 +1,30 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
 import fs from "fs";
-import { AlertFeature, AlertsResponse, PointsResponse, ForecastPeriod, ForecastResponse } from "./types.js";
-import { getCurrentTimestamp } from "./loggingUtil.js";
+import { z } from "zod";
 import path from "path";
 import { fileURLToPath } from "url";
-import { file } from "zod/v4";
+import { getCurrentTimestamp } from "./loggingUtil.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { AlertsResponse, PointsResponse, ForecastPeriod, ForecastResponse, WeatherAPIResponse } from "./types.js";
+import { makeNWSRequest, makeWeatherAPIRequest, formatAlert } from "./helpers.js";
 
-const USER_AGENT = process.env.WEATHER_USER_AGENT!;
 const NWS_API_BASE = process.env.USA_WEATHER_API!;
+const WEATHERAPI_KEY = process.env.WEATHERAPI_KEY!;
+const WEATHERAPI_URL = process.env.WEATHERAPI_URL;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-if (!USER_AGENT) {
-  throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - USER_AGENT is not set!`);
-}
 
 if (!NWS_API_BASE) {
   throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - NWS_API_BASE is not set!`);
 }
 
-// Weather API types
-
-// Helper functions
-async function makeNWSRequest<T>(url: string): Promise<T | null> {
-  const headers = {
-    "User-Agent": USER_AGENT,
-    Accept: "application/geo+json",
-  };
-
-  try {
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return (await response.json()) as T;
-  } catch (error) {
-    console.error("Error making NWS request:", error);
-    return null;
-  }
+if (!WEATHERAPI_KEY) {
+  throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - WEATHERAPI_KEY is not set!`);
 }
 
-function formatAlert(feature: AlertFeature): string {
-  const props = feature.properties;
-  return [
-    `Event: ${props.event || "Unknown"}`,
-    `Area: ${props.areaDesc || "Unknown"}`,
-    `Severity: ${props.severity || "Unknown"}`,
-    `Status: ${props.status || "Unknown"}`,
-    `Headline: ${props.headline || "No headline"}`,
-    "---",
-  ].join("\n");
+if (!WEATHERAPI_URL) {
+  throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - WEATHERAPI_URL is not set!`);
 }
 
-// Create the weather MCP server (each transport needs its own instance)
-function createWeatherServer(transportType: string) {
+function unifiedMCPServer(transportType: string) {
   const server = new McpServer({
     name: "weather",
     version: "1.0.0",
@@ -262,11 +233,11 @@ function createWeatherServer(transportType: string) {
                 transportType === "HTTP"
                   ? `You are a helpful weather assistant that can provide information about:
 
-**Canadian Weather (via MSC GeoMet):**
-1. Current weather observations from Canadian stations
-2. Climate normals and historical data (1981-2010)
-3. Weather station locations and information
-4. Real-time surface weather observations (SWOB)
+**Canadian Weather (via WeatherAPI.com):**
+1. Current weather conditions for Canadian cities and locations
+2. Weather forecasts (1-3 days) for Canadian locations
+3. Location search to find Canadian cities and coordinates
+4. Real-time weather data with comprehensive details
 
 **General Climate Data:**
 - Historical climate information from the server data file
@@ -274,12 +245,17 @@ function createWeatherServer(transportType: string) {
 - Long-term climate projections
 
 When responding to users:
-- For Canadian locations, use the Canadian weather tools (get-canada-current-weather, get-canada-climate-summary, get-canada-weather-stations)
+- For Canadian locations, use the Canadian weather tools (get-canada-current-weather, get-canada-forecast, search-canada-locations)
 - For historical climate data, reference the weather-data resource
 - Use a friendly, conversational tone
 - Always specify temperature units (°C for Canada)
 - Format alerts and warnings prominently
-- If location is ambiguous, ask for clarification about region
+- If location is ambiguous, ask for clarification or use search-canada-locations
+
+Available Canadian weather tools:
+- get-canada-current-weather: Current conditions for any Canadian city
+- get-canada-forecast: 1-3 day forecasts for Canadian locations
+- search-canada-locations: Find Canadian cities and their coordinates
 
 Note: US weather data (NWS) is only available via SSE transport.
 
@@ -319,171 +295,55 @@ Remember to format your responses clearly with appropriate sections for readabil
       },
       async ({ location, province }) => {
         try {
-          // First, try to get real-time weather station data
-          let searchParams = new URLSearchParams({
-            f: "json",
-            limit: "20",
-          });
-
-          // If it looks like coordinates, search by location
-          if (location.includes(",")) {
-            const [lat, lon] = location.split(",").map((s) => parseFloat(s.trim()));
-            if (!isNaN(lat) && !isNaN(lon)) {
-              // Search within a small bounding box around the coordinates
-              const buffer = 0.1; // ~10km radius
-              searchParams.append("bbox", `${lon - buffer},${lat - buffer},${lon + buffer},${lat + buffer}`);
-            }
-          } else {
-            // Search by location name
-            if (province) {
-              searchParams.append("STN_PROV", province.toUpperCase());
-            }
+          // Build the WeatherAPI query
+          let query = location;
+          if (province && !location.includes(",")) {
+            // If it's not coordinates and province is specified, add it to the query
+            query = `${location},${province},Canada`;
+          } else if (!location.includes(",")) {
+            // If it's not coordinates, ensure we specify Canada
+            query = `${location},Canada`;
           }
 
-          // Try SWOB real-time data first
-          const swobUrl = `https://api.weather.gc.ca/collections/swob-realtime/items?${searchParams}`;
+          const weatherUrl = `${
+            process.env.WEATHERAPI_URL
+          }/v1/current.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(query)}`;
+
           console.error(
-            `${getCurrentTimestamp()} - 🌡️ ${transportType} server - Fetching Canadian weather from: ${swobUrl}`
+            `${getCurrentTimestamp()} - 🌡️ ${transportType} server - Fetching Canadian weather from WeatherAPI: ${query}`
           );
 
-          const swobResponse = await fetch(swobUrl, {
-            headers: { Accept: "application/json" },
-          });
-
-          let weatherData = null;
-          if (swobResponse.ok) {
-            const swobData = await swobResponse.json();
-            if (swobData.features && swobData.features.length > 0) {
-              weatherData = swobData.features[0];
-            }
-          }
-
-          // If no real-time data, try climate daily data
-          if (!weatherData) {
-            const climateUrl = `https://api.weather.gc.ca/collections/climate-daily/items?${searchParams}`;
-            console.error(
-              `${getCurrentTimestamp()} - 🌡️ ${transportType} server - Trying climate data from: ${climateUrl}`
-            );
-
-            const climateResponse = await fetch(climateUrl, {
-              headers: { Accept: "application/json" },
-            });
-
-            if (climateResponse.ok) {
-              const climateData = await climateResponse.json();
-              if (climateData.features && climateData.features.length > 0) {
-                weatherData = climateData.features[0];
-              }
-            }
-          }
+          const weatherData = await makeWeatherAPIRequest<WeatherAPIResponse>(weatherUrl);
 
           if (!weatherData) {
             return {
               content: [
                 {
                   type: "text",
-                  text: `No current weather data found for "${location}"${
+                  text: `Failed to retrieve weather data for "${location}"${
                     province ? ` in ${province}` : ""
-                  }. This may be because:
-1. The location is not recognized
-2. No active weather stations are nearby
-3. The location is outside Canada
-
-Try providing a major Canadian city name or coordinates in the format "latitude,longitude".`,
+                  }. Please check the location name and try again.`,
                 },
               ],
             };
           }
 
-          const props = weatherData.properties;
-          const geometry = weatherData.geometry;
+          const { location: loc, current } = weatherData;
 
-          // Extract relevant weather information
-          const stationName = props.STN_NAM || props.STATION_NAME || "Unknown Station";
-          const province_abbr = props.STN_PROV || props.PROV || "";
-          const coords = geometry?.coordinates
-            ? `${geometry.coordinates[1]}, ${geometry.coordinates[0]}`
-            : "Not available";
+          let weatherText = `Current Weather for ${loc.name}, ${loc.region}, ${loc.country}\n\n`;
+          weatherText += `Location: ${loc.lat}, ${loc.lon}\n`;
+          weatherText += `Local Time: ${loc.localtime}\n`;
+          weatherText += `Time Zone: ${loc.tz_id}\n\n`;
 
-          // Temperature data
-          const temp = props.TEMP_AIR || props.MAX_TEMP || props.MIN_TEMP;
-          const tempUnit = props.TEMP_AIR ? "°C" : "";
+          weatherText += `Temperature: ${current.temp_c}°C (feels like ${current.feelslike_c}°C)\n`;
+          weatherText += `Condition: ${current.condition.text}\n`;
+          weatherText += `Humidity: ${current.humidity}%\n`;
+          weatherText += `Wind: ${current.wind_kph} km/h ${current.wind_dir}\n`;
+          weatherText += `Pressure: ${current.pressure_mb} mb\n`;
+          weatherText += `Visibility: ${current.vis_km} km\n`;
+          weatherText += `UV Index: ${current.uv}\n`;
 
-          // Precipitation
-          const precip = props.PCPN_AMT || props.TOTAL_PRECIP;
-
-          // Wind data
-          const windSpeed = props.WIND_SPD || props.WSPD_AVG;
-          const windDir = props.WIND_DIR || props.WDIR_AVG;
-
-          // Humidity
-          const humidity = props.REL_HUM;
-
-          // Observation time
-          const obsTime = props.DATE_TM || props.LOCAL_DATE;
-
-          let weatherText = `Current Weather for ${stationName}`;
-          if (province_abbr) weatherText += `, ${province_abbr}`;
-          weatherText += `\n\nLocation: ${coords}\n`;
-
-          if (obsTime) {
-            weatherText += `Observation Time: ${obsTime}\n`;
-          }
-
-          if (temp !== undefined && temp !== null) {
-            weatherText += `Temperature: ${temp}${tempUnit}\n`;
-          }
-
-          if (humidity !== undefined && humidity !== null) {
-            weatherText += `Humidity: ${humidity}%\n`;
-          }
-
-          if (windSpeed !== undefined && windSpeed !== null) {
-            weatherText += `Wind Speed: ${windSpeed} km/h`;
-            if (windDir !== undefined && windDir !== null) {
-              weatherText += ` from ${windDir}°`;
-            }
-            weatherText += `\n`;
-          }
-
-          if (precip !== undefined && precip !== null) {
-            weatherText += `Precipitation: ${precip} mm\n`;
-          }
-
-          // Add any additional available data
-          const additionalData: string[] = [];
-          Object.keys(props).forEach((key) => {
-            if (
-              ![
-                "STN_NAM",
-                "STATION_NAME",
-                "STN_PROV",
-                "PROV",
-                "DATE_TM",
-                "LOCAL_DATE",
-                "TEMP_AIR",
-                "MAX_TEMP",
-                "MIN_TEMP",
-                "PCPN_AMT",
-                "TOTAL_PRECIP",
-                "WIND_SPD",
-                "WSPD_AVG",
-                "WIND_DIR",
-                "WDIR_AVG",
-                "REL_HUM",
-              ].includes(key) &&
-              props[key] !== null &&
-              props[key] !== undefined
-            ) {
-              additionalData.push(`${key}: ${props[key]}`);
-            }
-          });
-
-          if (additionalData.length > 0) {
-            weatherText += `\nAdditional Information:\n${additionalData.join("\n")}`;
-          }
-
-          weatherText += `\n\nData provided by Environment and Climate Change Canada`;
+          weatherText += `\nData provided by WeatherAPI.com`;
 
           return {
             content: [
@@ -511,139 +371,85 @@ Try providing a major Canadian city name or coordinates in the format "latitude,
     );
 
     server.tool(
-      "get-canada-climate-summary",
-      "Get climate summary and normals for a Canadian location",
+      "get-canada-forecast",
+      "Get weather forecast for a Canadian location",
       {
-        location: z.string().describe("Canadian city name"),
-        province: z.string().optional().describe("Province abbreviation (BC, ON, etc.)"),
+        location: z.string().describe("Canadian city name or coordinates (lat,lon)"),
+        province: z.string().optional().describe("Province abbreviation (BC, ON, etc.) to help locate the city"),
+        days: z.number().optional().default(3).describe("Number of forecast days (1-3)"),
       },
-      async ({ location, province }) => {
+      async ({ location, province, days }) => {
         try {
-          let searchParams = new URLSearchParams({
-            f: "json",
-            limit: "10",
-          });
-
-          if (province) {
-            searchParams.append("PROVINCE", province.toUpperCase());
+          // Build the WeatherAPI query
+          let query = location;
+          if (province && !location.includes(",")) {
+            query = `${location},${province},Canada`;
+          } else if (!location.includes(",")) {
+            query = `${location},Canada`;
           }
 
-          // Try to get climate normals data
-          const normalsUrl = `https://api.weather.gc.ca/collections/climate-normals/items?${searchParams}`;
+          const forecastDays = Math.min(Math.max(days, 1), 3); // Clamp between 1-3
+          const forecastUrl = `https://api.weatherapi.com/v1/forecast.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(
+            query
+          )}&days=${forecastDays}`;
+
           console.error(
-            `${getCurrentTimestamp()} - 📊 ${transportType} server - Fetching Canadian climate normals from: ${normalsUrl}`
+            `${getCurrentTimestamp()} - 📊 ${transportType} server - Fetching Canadian forecast from WeatherAPI: ${query} (${forecastDays} days)`
           );
 
-          const response = await fetch(normalsUrl, {
-            headers: { Accept: "application/json" },
-          });
+          const forecastData = await makeWeatherAPIRequest<WeatherAPIResponse>(forecastUrl);
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const data = await response.json();
-
-          if (!data.features || data.features.length === 0) {
+          if (!forecastData || !forecastData.forecast) {
             return {
               content: [
                 {
                   type: "text",
-                  text: `No climate normals data found for "${location}"${
+                  text: `Failed to retrieve forecast data for "${location}"${
                     province ? ` in ${province}` : ""
-                  }. Try a major Canadian city name.`,
+                  }. Please check the location name and try again.`,
                 },
               ],
             };
           }
 
-          // Find the best match for the location
-          let bestMatch = data.features[0];
-          if (data.features.length > 1) {
-            // Try to find exact city match
-            const locationLower = location.toLowerCase();
-            for (const feature of data.features) {
-              const stationName = (feature.properties.STATION_NAME || "").toLowerCase();
-              if (stationName.includes(locationLower)) {
-                bestMatch = feature;
-                break;
-              }
-            }
-          }
+          const { location: loc, forecast } = forecastData;
 
-          const props = bestMatch.properties;
-          const geometry = bestMatch.geometry;
+          let forecastText = `${forecastDays}-Day Weather Forecast for ${loc.name}, ${loc.region}, ${loc.country}\n\n`;
+          forecastText += `Location: ${loc.lat}, ${loc.lon}\n`;
+          forecastText += `Time Zone: ${loc.tz_id}\n\n`;
 
-          const stationName = props.STATION_NAME || "Unknown Station";
-          const province_name = props.PROVINCE || province || "";
-          const coords = geometry?.coordinates
-            ? `${geometry.coordinates[1]}, ${geometry.coordinates[0]}`
-            : "Not available";
+          forecast.forecastday.forEach((day, index) => {
+            const dayData = day.day;
+            forecastText += `Day ${index + 1} - ${day.date}\n`;
+            forecastText += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+            forecastText += `High: ${dayData.maxtemp_c}°C | Low: ${dayData.mintemp_c}°C | Avg: ${dayData.avgtemp_c}°C\n`;
+            forecastText += `Condition: ${dayData.condition.text}\n`;
+            forecastText += `Max Wind: ${dayData.maxwind_kph} km/h\n`;
+            forecastText += `Precipitation: ${dayData.totalprecip_mm} mm\n`;
+            forecastText += `Avg Humidity: ${dayData.avghumidity}%\n`;
+            forecastText += `UV Index: ${dayData.uv}\n\n`;
+          });
 
-          let climateText = `Climate Normals (1981-2010) for ${stationName}`;
-          if (province_name) climateText += `, ${province_name}`;
-          climateText += `\n\nLocation: ${coords}\n`;
-
-          // Temperature data
-          if (props.JAN_MEAN !== undefined) {
-            climateText += `\nMonthly Temperature Averages (°C):\n`;
-            const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-            for (let i = 0; i < months.length; i++) {
-              const temp = props[`${months[i]}_MEAN`];
-              if (temp !== undefined && temp !== null) {
-                climateText += `${monthNames[i]}: ${temp}°C  `;
-                if ((i + 1) % 4 === 0) climateText += `\n`;
-              }
-            }
-          }
-
-          // Precipitation data
-          if (props.JAN_PRECIP !== undefined) {
-            climateText += `\n\nMonthly Precipitation Averages (mm):\n`;
-            const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-            for (let i = 0; i < months.length; i++) {
-              const precip = props[`${months[i]}_PRECIP`];
-              if (precip !== undefined && precip !== null) {
-                climateText += `${monthNames[i]}: ${precip}mm  `;
-                if ((i + 1) % 4 === 0) climateText += `\n`;
-              }
-            }
-          }
-
-          // Annual summaries
-          if (props.ANN_MEAN_TEMP !== undefined) {
-            climateText += `\n\nAnnual Summary:\n`;
-            climateText += `Mean Temperature: ${props.ANN_MEAN_TEMP}°C\n`;
-          }
-          if (props.ANN_TOTAL_PRECIP !== undefined) {
-            climateText += `Total Precipitation: ${props.ANN_TOTAL_PRECIP}mm\n`;
-          }
-
-          climateText += `\n\nData period: 1981-2010 Climate Normals`;
-          climateText += `\nData provided by Environment and Climate Change Canada`;
+          forecastText += `Data provided by WeatherAPI.com`;
 
           return {
             content: [
               {
                 type: "text",
-                text: climateText,
+                text: forecastText,
               },
             ],
           };
         } catch (error) {
           console.error(
-            `${getCurrentTimestamp()} - ❌ ${transportType} server - Error fetching Canadian climate data:`,
+            `${getCurrentTimestamp()} - ❌ ${transportType} server - Error fetching Canadian forecast:`,
             error
           );
           return {
             content: [
               {
                 type: "text",
-                text: `Failed to retrieve Canadian climate normals for "${location}". Please try again with a specific Canadian city name.`,
+                text: `Failed to retrieve Canadian forecast for "${location}". Please try again with a specific Canadian city name or coordinates.`,
               },
             ],
           };
@@ -652,103 +458,88 @@ Try providing a major Canadian city name or coordinates in the format "latitude,
     );
 
     server.tool(
-      "get-canada-weather-stations",
-      "Find weather stations near a Canadian location",
+      "search-canada-locations",
+      "Search for Canadian locations to get weather data",
       {
-        latitude: z.number().describe("Latitude coordinate in Canada"),
-        longitude: z.number().describe("Longitude coordinate in Canada"),
-        radius_km: z.number().optional().default(50).describe("Search radius in kilometers (default: 50km)"),
+        query: z.string().describe("Location name to search for in Canada"),
       },
-      async ({ latitude, longitude, radius_km }) => {
+      async ({ query }) => {
         try {
-          // Create bounding box for search
-          const latBuffer = radius_km / 111; // Roughly 1 degree = 111 km
-          const lonBuffer = radius_km / (111 * Math.cos((latitude * Math.PI) / 180));
+          // Use WeatherAPI's search endpoint to find matching locations
+          const searchUrl = `https://api.weatherapi.com/v1/search.json?key=${WEATHERAPI_KEY}&q=${encodeURIComponent(
+            query
+          )}`;
 
-          const searchParams = new URLSearchParams({
-            f: "json",
-            limit: "20",
-            bbox: `${longitude - lonBuffer},${latitude - latBuffer},${longitude + lonBuffer},${latitude + latBuffer}`,
-          });
-
-          // Search for weather stations
-          const stationsUrl = `https://api.weather.gc.ca/collections/swob-stations/items?${searchParams}`;
           console.error(
-            `${getCurrentTimestamp()} - 🌡️ ${transportType} server - Searching Canadian weather stations: ${stationsUrl}`
+            `${getCurrentTimestamp()} - 🔍 ${transportType} server - Searching Canadian locations: ${query}`
           );
 
-          const response = await fetch(stationsUrl, {
-            headers: { Accept: "application/json" },
-          });
+          const searchData = await makeWeatherAPIRequest<
+            Array<{
+              id: number;
+              name: string;
+              region: string;
+              country: string;
+              lat: number;
+              lon: number;
+              url: string;
+            }>
+          >(searchUrl);
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const data = await response.json();
-
-          if (!data.features || data.features.length === 0) {
+          if (!searchData || searchData.length === 0) {
             return {
               content: [
                 {
                   type: "text",
-                  text: `No weather stations found within ${radius_km}km of coordinates ${latitude}, ${longitude}. The location may be outside Canada or in a remote area with no active weather stations.`,
+                  text: `No locations found matching "${query}". Please try a different search term or check the spelling.`,
                 },
               ],
             };
           }
 
-          let stationsText = `Weather Stations within ${radius_km}km of ${latitude}, ${longitude}\n\n`;
-          stationsText += `Found ${data.features.length} stations:\n\n`;
+          // Filter for Canadian locations
+          const canadianLocations = searchData.filter((loc) => loc.country.toLowerCase().includes("canada"));
 
-          for (let i = 0; i < data.features.length; i++) {
-            const station = data.features[i];
-            const props = station.properties;
-            const coords = station.geometry?.coordinates;
-
-            const name = props.STN_NAM || props.STATION_NAME || `Station ${i + 1}`;
-            const province = props.STN_PROV || props.PROVINCE || "";
-            const id = props.STN_ID || props.STATION_ID || "";
-
-            stationsText += `${i + 1}. ${name}`;
-            if (province) stationsText += ` (${province})`;
-            stationsText += `\n`;
-
-            if (coords && coords.length >= 2) {
-              stationsText += `   Location: ${coords[1]}, ${coords[0]}\n`;
-
-              // Calculate distance
-              const distance = Math.sqrt(
-                Math.pow((coords[1] - latitude) * 111, 2) +
-                  Math.pow((coords[0] - longitude) * 111 * Math.cos((latitude * Math.PI) / 180), 2)
-              );
-              stationsText += `   Distance: ${distance.toFixed(1)} km\n`;
-            }
-
-            if (id) stationsText += `   Station ID: ${id}\n`;
-            stationsText += `\n`;
+          if (canadianLocations.length === 0) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `No Canadian locations found matching "${query}". Found ${searchData.length} location(s) but none in Canada.`,
+                },
+              ],
+            };
           }
 
-          stationsText += `Data provided by Environment and Climate Change Canada`;
+          let locationsText = `Found ${canadianLocations.length} Canadian location(s) matching "${query}":\n\n`;
+
+          canadianLocations.forEach((loc, index) => {
+            locationsText += `${index + 1}. ${loc.name}, ${loc.region}\n`;
+            locationsText += `   Country: ${loc.country}\n`;
+            locationsText += `   Coordinates: ${loc.lat}, ${loc.lon}\n`;
+            locationsText += `   Location ID: ${loc.id}\n\n`;
+          });
+
+          locationsText += `You can use any of these location names with the get-canada-current-weather or get-canada-forecast tools.`;
 
           return {
             content: [
               {
                 type: "text",
-                text: stationsText,
+                text: locationsText,
               },
             ],
           };
         } catch (error) {
           console.error(
-            `${getCurrentTimestamp()} - ❌ ${transportType} server - Error fetching Canadian weather stations:`,
+            `${getCurrentTimestamp()} - ❌ ${transportType} server - Error searching Canadian locations:`,
             error
           );
           return {
             content: [
               {
                 type: "text",
-                text: `Failed to find weather stations near ${latitude}, ${longitude}. Please verify the coordinates are within Canada.`,
+                text: `Failed to search for locations matching "${query}". Please try again.`,
               },
             ],
           };
@@ -760,4 +551,4 @@ Try providing a major Canadian city name or coordinates in the format "latitude,
   return server;
 }
 
-export default createWeatherServer;
+export default unifiedMCPServer;
