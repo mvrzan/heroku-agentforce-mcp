@@ -22,14 +22,14 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
     - [Configuration](#configuration)
       - [Requirements](#requirements)
       - [Setup](#setup)
-          - [Local environment configuration](#local-environment-configuration)
+        - [Local environment configuration](#local-environment-configuration)
         - [Development](#development)
   - [Project 2: Local MCP Client and Heroku MCP Server](#project-2-local-mcp-client-and-heroku-mcp-server)
     - [Technologies used](#technologies-used-1)
     - [Configuration](#configuration-1)
       - [Requirements](#requirements-1)
       - [Setup](#setup-1)
-          - [Local environment configuration](#local-environment-configuration-1)
+        - [Local environment configuration](#local-environment-configuration-1)
         - [Development](#development-1)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
   - [Project 4: Agentforce and Heroku MCP Servicer (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-servicer-native-agentforce-mcp-client)
@@ -186,20 +186,18 @@ When you make changes to your code, the server will automatically restart to fet
 
 This project showcases how to run a local CLI tool with local MCP Clients that connect to an MCP server hosted on Heroku that was built with Node.js, TypeScript, and the Anthropic SDK. The architecture involves a two MCP clients that communicate with with their respective MCP servers over `streamable HTTP` and `SSE (server sent events)`:
 
-TODO: Update the code paths for the Server Sent Events MCP Server capabilities
-
 The architecture diagram shows the following:
 
 1.  **CLI Invocation**: The process starts when a user invokes a command through the **Command-Line Interface (CLI)**.
 2.  **MCP Client**: The CLI interacts with an **MCP Clients** to gather context from various MCP servers both over `streamable HTTP` and `SSE (server sent events)`.
 3.  **Streamable HTTP MCP Server Capabilities**: The MCP Server is configured with the following capabilities:
-    - **Invokes weather API tools**: Lists two weather API [tools](./project_2/server/src/utils/UnifiedMCPServer.ts#117) for United States
+    - **Invokes weather API tools**: Lists two weather API [tools](./project_2/server/src/utils/UnifiedMCPServer.ts#25) for United States
 4.  **Server Sent Events MCP Server Capabilities**: The MCP Server is configured with the following capabilities:
-    - **Local file**: Gathers local file data ([data.json](./project_1/server/src/data/data.json))
-    - **Invokes weather API tools**: Lists API weather tools just for Canada [tools](./project_1/server/src/index.ts#55)
-    - **Prompt**: Sets a system [prompt](./project_1/server/src/index.ts#216)
+    - **Local file**: Gathers local file data ([data.json](./project_2/server/src/data/data.json))
+    - **Invokes weather API tools**: Lists API weather tools just for Canada [tools](./project_2/server/src/utils/UnifiedMCPServer.ts#161)
+    - **Prompt**: Sets a system [prompt](./project_2/server/src/utils/UnifiedMCPServer.ts#210)
 5.  **Context Provisioning**: The MCP Client takes the payload from the MCP servers and passes it to the LLM as context.
-6.  **LLM Processing**: The LLM (invoked via the [Anthropic SDK](./project_1/client/src/utils/MCPClient.ts#222)) processes the user's request using the context provided by the MCP Client and decides which resource to invoke.
+6.  **LLM Processing**: The LLM (invoked via the [Anthropic SDK](./project_2/client/src/index.ts)) processes the user's request using the context provided by the MCP Client and decides which resource to invoke.
 7.  **CLI Output**: The LLM's response is returned to the CLI, which then displays the final output to the user.
 
 This setup demonstrates how a single host application can instantiate multiple MCP clients and connect to multiple MCP servers that are hosted on Heroku.
@@ -226,9 +224,6 @@ This setup demonstrates how a single host application can instantiate multiple M
 
 #### Requirements
 
-TODO: Update requirements to include weatherapi API
-TODO: Update the .env instructions for the server file
-
 To run this application locally, you will need the following:
 
 - An Anthropic [account](https://www.anthropic.com/) with a paid subscription to get an API key
@@ -236,6 +231,7 @@ To run this application locally, you will need the following:
 - npm version 10.0.0 or later installed (type `npm -v` in your terminal to check). Node.js includes `npm`
 - git installed. Follow the instructions to [install git](https://git-scm.com/downloads)
 - A [Heroku account](https://signup.heroku.com/)
+- A [WeatherAPI account](https://www.weatherapi.com/) and API key
 
 #### Setup
 
@@ -276,6 +272,22 @@ ANTHROPIC_CLAUDE_MODEL=claude-3-7-sonnet-20250219
 ```
 
 > The ANTHROPIC_CLAUDE_MODEL=claude-3-7-sonnet-20250219 value is already set, to the Claude 3.5 model, but you are welcome to change it.
+
+Server:
+
+```
+cd heroku-mcp/project_2/server
+cp .env.example .env
+```
+
+Edit the newly created `.env` file and update the variable with your WeatherAPI account API key:
+
+```
+WEATHER_USER_AGENT=weather-app/1.0
+USA_WEATHER_API=https://api.weather.gov
+WEATHERAPI_URL=https://api.weatherapi.com
+WEATHERAPI_KEY=
+```
 
 Once all of this is done, you are ready to run the application locally!
 
