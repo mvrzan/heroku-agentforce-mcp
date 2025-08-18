@@ -7,14 +7,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { AlertsResponse, PointsResponse, ForecastPeriod, ForecastResponse, WeatherAPIResponse } from "./types.js";
 import { makeNWSRequest, makeWeatherAPIRequest, formatAlert } from "./helpers.js";
 
-const NWS_API_BASE = process.env.USA_WEATHER_API!;
 const WEATHERAPI_KEY = process.env.WEATHERAPI_KEY!;
 const WEATHERAPI_URL = process.env.WEATHERAPI_URL;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-if (!NWS_API_BASE) {
-  throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - NWS_API_BASE is not set!`);
-}
 
 if (!WEATHERAPI_KEY) {
   throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - WEATHERAPI_KEY is not set!`);
@@ -45,7 +40,7 @@ function unifiedMCPServer(transportType: string) {
       },
       async ({ state }) => {
         const stateCode = state.toUpperCase();
-        const alertsUrl = `${NWS_API_BASE}/alerts?area=${stateCode}`;
+        const alertsUrl = `alerts?area=${stateCode}`;
         const alertsData = await makeNWSRequest<AlertsResponse>(alertsUrl);
 
         if (!alertsData) {
@@ -60,6 +55,7 @@ function unifiedMCPServer(transportType: string) {
         }
 
         const alerts = alertsData.features || [];
+
         if (alerts.length === 0) {
           return {
             content: [
@@ -93,7 +89,7 @@ function unifiedMCPServer(transportType: string) {
         longitude: z.number().describe("Longitude coordinate"),
       },
       async ({ latitude, longitude }) => {
-        const pointsUrl = `${NWS_API_BASE}/points/${latitude},${longitude}`;
+        const pointsUrl = `points/${latitude},${longitude}`;
         const pointsData = await makeNWSRequest<PointsResponse>(pointsUrl);
 
         if (!pointsData) {
@@ -108,6 +104,7 @@ function unifiedMCPServer(transportType: string) {
         }
 
         const forecastUrl = pointsData.properties?.forecast;
+
         if (!forecastUrl) {
           return {
             content: [
@@ -120,6 +117,7 @@ function unifiedMCPServer(transportType: string) {
         }
 
         const forecastData = await makeNWSRequest<ForecastResponse>(forecastUrl);
+
         if (!forecastData) {
           return {
             content: [
@@ -132,6 +130,7 @@ function unifiedMCPServer(transportType: string) {
         }
 
         const periods = forecastData.properties?.periods || [];
+
         if (periods.length === 0) {
           return {
             content: [
