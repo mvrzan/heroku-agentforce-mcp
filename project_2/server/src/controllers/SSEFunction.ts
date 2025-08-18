@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { getCurrentTimestamp } from "../utils/loggingUtil.js";
-import createWeatherServer from "../utils/UnifiedMCPServer.js";
+import unifiedMCPServer from "../utils/UnifiedMCPServer.js";
 
 const sseTransports = new Map<string, SSEServerTransport>();
 
@@ -20,7 +20,7 @@ export const SSEFunction = async (_req: Request, res: Response) => {
       sseTransports.delete(sessionId);
     };
 
-    const server = createWeatherServer("SSE");
+    const server = unifiedMCPServer("SSE");
     await server.connect(transport);
 
     console.error(
