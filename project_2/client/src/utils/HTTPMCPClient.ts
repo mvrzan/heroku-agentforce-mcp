@@ -9,7 +9,6 @@ export class HTTPMCPClient extends BaseMCPClient {
 
   async connectToServer(serverUrl: string): Promise<void> {
     try {
-      // Create HTTP transport for the server
       this.transport = new StreamableHTTPClientTransport(new URL(serverUrl));
       await this.initializeConnection(serverUrl);
     } catch (error) {
