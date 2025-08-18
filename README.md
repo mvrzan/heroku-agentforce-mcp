@@ -33,7 +33,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
         - [Development](#development-1)
       - [Deployment](#deployment)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
-  - [Project 4: Agentforce and Heroku MCP Servicer (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-servicer-native-agentforce-mcp-client)
+  - [Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-server-native-agentforce-mcp-client)
 - [License](#license)
 - [Disclaimer](#disclaimer)
 
@@ -317,7 +317,7 @@ To deploy the application to Heroku, please follow the [official instructions](h
 
 ![](./screenshots/project-3-architecture-diagram.png)
 
-## Project 4: Agentforce and Heroku MCP Servicer (native Agentforce MCP client)
+## Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)
 
 🚧 **Work in progress** 🚧
 
