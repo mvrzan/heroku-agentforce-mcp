@@ -4,9 +4,14 @@ import { AlertFeature } from "./types.js";
 export async function makeNWSRequest<T>(url: string): Promise<T | null> {
   try {
     const USER_AGENT = process.env.WEATHER_USER_AGENT!;
+    const NWS_API_BASE = process.env.USA_WEATHER_API!;
 
     if (!USER_AGENT) {
       throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - USER_AGENT is not set!`);
+    }
+
+    if (!NWS_API_BASE) {
+      throw new Error(`${getCurrentTimestamp()} - ❌ MCPServer - NWS_API_BASE is not set!`);
     }
 
     const headers = {
@@ -14,7 +19,8 @@ export async function makeNWSRequest<T>(url: string): Promise<T | null> {
       Accept: "application/geo+json",
     };
 
-    const response = await fetch(url, { headers });
+    const endpointUrl = url.startsWith("http") ? url : `${NWS_API_BASE}/${url}`;
+    const response = await fetch(endpointUrl, { headers });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
