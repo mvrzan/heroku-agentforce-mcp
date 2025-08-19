@@ -1,5 +1,6 @@
 <p align="center">
 <p align="center">
+<a  href="https://www.salesforce.com/agentforce/"><img  src="./screenshots/agentforce_logo.webp"  alt="Agentforce"  width="150" height="150" hspace="50"/></a>
 <a  href="https://modelcontextprotocol.io/introduction"><img  src="./screenshots/mcp.png"  alt="Model Context Protocol"  width="150" height="150" hspace="50" /></a>
 <a  href="https://www.heroku.com/"><img  src="./screenshots/heroku.webp"  alt="Heroku"  width="150" height="150" hspace="50"/></a>
 <p/>
@@ -22,14 +23,14 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
     - [Configuration](#configuration)
       - [Requirements](#requirements)
       - [Setup](#setup)
-        - [Local environment configuration](#local-environment-configuration)
+          - [Local environment configuration](#local-environment-configuration)
         - [Development](#development)
   - [Project 2: Local MCP Client and Heroku MCP Server](#project-2-local-mcp-client-and-heroku-mcp-server)
     - [Technologies used](#technologies-used-1)
     - [Configuration](#configuration-1)
       - [Requirements](#requirements-1)
       - [Setup](#setup-1)
-        - [Local environment configuration](#local-environment-configuration-1)
+          - [Local environment configuration](#local-environment-configuration-1)
         - [Development](#development-1)
       - [Deployment](#deployment)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
