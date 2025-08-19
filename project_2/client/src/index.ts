@@ -107,7 +107,7 @@ async function setupClients(clients: ClientInstance[], rl: readline.Interface) {
   while (true) {
     console.log(`\n${getCurrentTimestamp()} - 🔧 UnifiedMCPClient - Setting up Client #${clientNumber}:`);
     console.log("1. SSE Server (e.g., http://localhost:3000/sse)");
-    console.log("2. HTTP Server (e.g., http://localhost:3000/mcp)");
+    console.log("2. HTTP Server (e.g., http://localhost:3000/http)");
     console.log("3. Skip (finish setup)");
 
     const choice = await rl.question("Choose connection type (1-3): ");
@@ -133,7 +133,7 @@ async function setupClients(clients: ClientInstance[], rl: readline.Interface) {
           break;
 
         case "2":
-          serverPath = await rl.question("Enter HTTP server URL (e.g., http://localhost:3000/mcp): ");
+          serverPath = await rl.question("Enter HTTP server URL (e.g., http://localhost:3000/http): ");
           if (!serverPath) {
             console.log(`${getCurrentTimestamp()} - ⚠️ UnifiedMCPClient - No URL provided, skipping.`);
             continue;
