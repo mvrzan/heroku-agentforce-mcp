@@ -87,3 +87,39 @@ export interface WeatherAPIResponse {
     }>;
   };
 }
+
+// MCP Client related types
+export interface ClientInstance {
+  type: "SSE" | "HTTP";
+  client: any;
+  identifier: string;
+}
+
+export interface UnifiedTool {
+  name: string;
+  description: string;
+  input_schema: any;
+  source: string;
+  client: any;
+}
+
+export interface UnifiedResource {
+  name: string;
+  description: string;
+  uri: string;
+  source: string;
+  client: any;
+}
+
+export interface MCPClientRequest {
+  serverUrl?: string;
+  transport?: "SSE" | "HTTP";
+  query?: string;
+  clientName?: string;
+}
+
+export interface MCPServerRequest {
+  serverType?: string;
+  query?: string;
+  transport?: "SSE" | "HTTP";
+}
