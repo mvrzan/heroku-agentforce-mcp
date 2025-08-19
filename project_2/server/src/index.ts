@@ -18,7 +18,7 @@ app.use(
 
 const sseTransports = new Map<string, SSEServerTransport>();
 const httpTransports: Record<string, StreamableHTTPServerTransport> = {};
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.APP_PORT || process.env.PORT || 3000;
 
 const httpServer = app.listen(PORT, () => {
   console.error(`${getCurrentTimestamp()} - 🏃 Unified server - Weather MCP Unified Server running on:`);
