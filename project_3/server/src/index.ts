@@ -27,7 +27,6 @@ const httpServer = app.listen(PORT, () => {
   console.log(`${getCurrentTimestamp()} - 🚀 Express Server - MCP Client-Server API starting...`);
   console.log(`${getCurrentTimestamp()} - 🌐 Express Server - Server running on http://localhost:${PORT}`);
   console.log(`${getCurrentTimestamp()} - � Express Server - Available endpoints:`);
-  console.log(`  - GET  /mcp            - API information`);
   console.log(`  - POST /mcp/remote     - Connect to remote MCP server`);
   console.log(`  - POST /mcp/local      - Create local MCP server`);
   console.log(`${getCurrentTimestamp()} - ✅ Express Server - Ready to accept requests`);
