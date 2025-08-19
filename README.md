@@ -8,7 +8,11 @@
 
 # Exploring Model Context Protocol (MCP) with Heroku and Agentforce
 
-The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents.
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents including Agentforce. This repository has 3 projects:
+
+1. A local MCP Client and a local MCP Server
+2. A local MCP Client and two remote MCP Servers hosted on Heroku
+3. Agentforce and Heroku MCP server integration (pre-native Agentforce MCP client)
 
 # Table of Contents
 
