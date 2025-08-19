@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "start": "cd project_2/server && npm install && npm run start"
+  }
+}
