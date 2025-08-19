@@ -1,84 +1,75 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { getCurrentTimestamp } from "./utils/loggingUtil.js";
 import MCPServerRoutes from "./routes/routes.js";
 
 const app = express();
-app.use(express.json());
+const PORT = process.env.APP_PORT || process.env.PORT || 3000;
+
 app.use(MCPServerRoutes);
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: "*",
-    exposedHeaders: ["Mcp-Session-Id"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+app.use((req, _res, next) => {
+  console.log(`${getCurrentTimestamp()} - 📡 Express Server - ${req.method} ${req.originalUrl}`);
 
-const sseTransports = new Map<string, SSEServerTransport>();
-const httpTransports: Record<string, StreamableHTTPServerTransport> = {};
-const PORT = process.env.APP_PORT || process.env.PORT || 3000;
-
-const httpServer = app.listen(PORT, () => {
-  console.error(`${getCurrentTimestamp()} - 🏃 Unified server - Weather MCP Unified Server running on:`);
-  console.error(`  - SSE Transport:  http://localhost:${PORT}/sse`);
-  console.error(`  - HTTP Transport: http://localhost:${PORT}/http`);
-  console.error(`${getCurrentTimestamp()} - 🎯 Unified server - Server is ready to accept connections`);
+  next();
 });
 
-httpServer.on("error", (error) => {
-  console.error(`${getCurrentTimestamp()} - ❌ Unified server - Server error:`, error);
+const httpServer = app.listen(PORT, () => {
+  console.log(`${getCurrentTimestamp()} - 🚀 Express Server - MCP Client-Server API starting...`);
+  console.log(`${getCurrentTimestamp()} - 🌐 Express Server - Server running on http://localhost:${PORT}`);
+  console.log(`${getCurrentTimestamp()} - � Express Server - Available endpoints:`);
+  console.log(`  - GET  /mcp            - API information`);
+  console.log(`  - POST /mcp/remote     - Connect to remote MCP server`);
+  console.log(`  - POST /mcp/local      - Create local MCP server`);
+  console.log(`${getCurrentTimestamp()} - ✅ Express Server - Ready to accept requests`);
+});
+
+httpServer.on("error", (error: any) => {
+  console.error(`${getCurrentTimestamp()} - ❌ Express Server - Server error:`, error);
+
+  if (error.code === "EADDRINUSE") {
+    console.error(`${getCurrentTimestamp()} - ❌ Express Server - Port ${PORT} is already in use`);
+    process.exit(1);
+  }
 });
 
 async function gracefulShutdown(signal: string) {
-  console.error(`${getCurrentTimestamp()} - 🛑 Unified server - Received ${signal}, shutting down gracefully...`);
-
-  for (const [sessionId, transport] of sseTransports) {
-    try {
-      console.error(`${getCurrentTimestamp()} - 🔐 Unified server - Closing SSE transport for session ${sessionId}`);
-      await transport.close();
-      sseTransports.delete(sessionId);
-    } catch (error) {
-      console.error(
-        `${getCurrentTimestamp()} - ❌ Unified server - Error closing SSE transport for session ${sessionId}:`,
-        error
-      );
-    }
-  }
-
-  for (const sessionId in httpTransports) {
-    try {
-      console.error(`${getCurrentTimestamp()} - 🔐 Unified server - Closing HTTP transport for session ${sessionId}`);
-      await httpTransports[sessionId].close();
-      delete httpTransports[sessionId];
-    } catch (error) {
-      console.error(
-        `${getCurrentTimestamp()} - ❌ Unified server - Error closing HTTP transport for session ${sessionId}:`,
-        error
-      );
-    }
-  }
+  console.log(`${getCurrentTimestamp()} - � Express Server - Received ${signal}, shutting down gracefully...`);
 
   httpServer.close(() => {
-    console.error(`${getCurrentTimestamp()} - ✅ Unified server - Server closed successfully`);
+    console.log(`${getCurrentTimestamp()} - ✅ Express Server - HTTP server closed successfully`);
+    console.log(`${getCurrentTimestamp()} - 👋 Express Server - Goodbye!`);
     process.exit(0);
   });
+
+  // Force exit after 10 seconds if graceful shutdown fails
+  setTimeout(() => {
+    console.error(`${getCurrentTimestamp()} - ⚠️ Express Server - Forced shutdown after timeout`);
+    process.exit(1);
+  }, 10000);
 }
 
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
 process.on("uncaughtException", (error) => {
-  console.error(`${getCurrentTimestamp()} - ❌ Unified server - Uncaught exception:`, error);
-  console.error(
-    `${getCurrentTimestamp()} - 🛑 Unified server - Server will continue running, but this should be investigated`
-  );
+  console.error(`${getCurrentTimestamp()} - ❌ Express Server - Uncaught exception:`, error);
+  console.error(`${getCurrentTimestamp()} - 🛑 Express Server - Process will exit`);
+  process.exit(1);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
-  console.error(`${getCurrentTimestamp()} - ❌ Unified server - Unhandled rejection at:`, promise, "reason:", reason);
-  console.error(
-    `${getCurrentTimestamp()} - 🛑 Unified server - Server will continue running, but this should be investigated`
-  );
+  console.error(`${getCurrentTimestamp()} - ❌ Express Server - Unhandled rejection at:`, promise);
+  console.error(`${getCurrentTimestamp()} - ❌ Express Server - Reason:`, reason);
+  console.error(`${getCurrentTimestamp()} - 🛑 Express Server - Process will exit`);
+  process.exit(1);
 });
