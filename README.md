@@ -318,6 +318,17 @@ To deploy the application to Heroku, please follow the [official instructions](h
 
 > NOTE: If you want to deploy this application to Heroku, you will have to create all of the above variables as Heroku environment variables. This can be done via the [command line or the Heroku Dashboard UI](https://devcenter.heroku.com/articles/config-vars).
 
+In order to deploy this on Heroku, make sure you have the right `package.json` deployment script in the repository root folder:
+
+```
+{
+  "scripts": {
+    "start": "cd project_2/server && npm install && npm run start"
+  }
+}
+
+```
+
 ## Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)
 
 ![](./screenshots/project-3-architecture-diagram.png)
