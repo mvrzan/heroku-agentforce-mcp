@@ -6,13 +6,13 @@
 <p/>
 <p/>
 
-# Exploring Model Context Protocol (MCP) with Heroku
+# Exploring Model Context Protocol (MCP) with Heroku and Agentforce
 
 The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents.
 
 # Table of Contents
 
-- [Exploring Model Context Protocol (MCP) with Heroku](#exploring-model-context-protocol-mcp-with-heroku)
+- [Exploring Model Context Protocol (MCP) with Heroku and Agentforce](#exploring-model-context-protocol-mcp-with-heroku-and-agentforce)
 - [Table of Contents](#table-of-contents)
   - [What does it do?](#what-does-it-do)
   - [Model Context Protocol Overview](#model-context-protocol-overview)
