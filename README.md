@@ -38,6 +38,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
         - [Development](#development-1)
       - [Deployment](#deployment)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
+    - [Technologies used](#technologies-used-2)
   - [Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-server-native-agentforce-mcp-client)
 - [License](#license)
 - [Disclaimer](#disclaimer)
@@ -332,6 +333,32 @@ In order to deploy this on Heroku, make sure you have the right `package.json` d
 ## Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)
 
 ![](./screenshots/project-3-architecture-diagram.png)
+
+This project showcases how to integrate Salesforce Agentforce Agent with an MCP server via Heroku. The Heroku dyno hosts a Node Express server that exposes several routes that instantiate an MCP client and MCP server.
+
+The architecture diagram shows the following:
+
+1.  **Agentforce**: The process starts within **Agentforce**. An Agent invokes a Topic that invokes the appropriate Action that is defined by the OpenAPI specifications and it makes a network request to the Heroku Dyno.
+2.  **Heroku**: The Heroku Dyno has a Node Express server running and a the incoming request is handled by the invoked endpoint
+3.  **Express endpoint**: Once the invoked endpoint has received a network request, it will instantiate an MCP client and MCP server
+4.  **MCP Client**: The MCP Client will invoke a specific tool from the MCP Server
+5.  **MCP Server**: The MCP Server will utilize the tool and make the network API call to get weather data
+6.  **Express server**: The server parses the MCP Server response and pushes the data back to Agentforce in a format defined by the OpenAPI specifications
+7.  **Agentforce**: Agentforce gets the response and presents the data to the user
+
+This setup demonstrates how to integrate Agentforce with an MCP server(s) via Heroku.
+
+> Note: It is worth mentioning that this setup lacks the flexibility and most of the benefits the MCP standard provides. Unless MCP is a hard requirement, it would make a lot more sense to skip the MCP integration and go directly with API integrations.
+
+### Technologies used
+
+- [Node.js](https://nodejs.org/en)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Express](https://expressjs.com/)
+- [Model Context Protocol](https://github.com/modelcontextprotocol/typescript-sdk)
+- [Heroku](https://www.heroku.com/)
+- [Salesforce](https://www.salesforce.com)
+- [Agentforce](https://www.salesforce.com/agentforce/)
 
 ## Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)
 
