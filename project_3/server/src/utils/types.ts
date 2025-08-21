@@ -121,5 +121,5 @@ export interface MCPClientRequest {
 export interface MCPServerRequest {
   serverType?: string;
   query?: string;
-  transport?: "SSE" | "HTTP";
+  transport?: "SSE" | "HTTP" | "DIRECT";
 }
