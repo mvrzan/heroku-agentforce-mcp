@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { getCurrentTimestamp } from "../utils/loggingUtil.js";
-import { HTTPMCPClient } from "../utils/HTTPMCPClient.js";
-import { createWeatherMCPServer } from "../utils/WeatherMCPServer.js";
-import { getCurrentWeatherCanada, getForecastCanada } from "../utils/weatherHelpers.js";
+import { WeatherMCPClient } from "../utils/WeatherMCPClient.js";
 
 export const canadaCurrentWeather = async (req: Request, res: Response) => {
+  const mcpClient = new WeatherMCPClient();
+
   try {
     const { location, province } = req.query;
 
@@ -21,51 +21,18 @@ export const canadaCurrentWeather = async (req: Request, res: Response) => {
       }`
     );
 
-    // Simulate MCP Client-Server Pattern:
-    // 1. Controller acts as MCP Client
-    // 2. Weather helper functions act as MCP Server tools
-    const mcpServer = createWeatherMCPServer();
-    const client = new HTTPMCPClient();
-
     try {
-      console.log(
-        `${getCurrentTimestamp()} - 🔄 MCP Client - Calling get-canada-current-weather tool through MCP Server`
-      );
+      console.log(`${getCurrentTimestamp()} - 🔄 MCP Client - Establishing connection to Weather MCP Server`);
 
-      const weatherData = await getCurrentWeatherCanada(location, province as string);
+      await mcpClient.connect();
 
-      if (!weatherData) {
-        console.log(
-          `${getCurrentTimestamp()} - ⚠️ MCP Server - No weather data found for: ${location}, ${province || "Canada"}`
-        );
-        return res.json({
-          success: true,
-          data: {
-            location: `${location}${province ? `, ${province}` : ""}, Canada`,
-            weather: `Failed to retrieve weather data for: ${location}${province ? `, ${province}` : ""}, Canada`,
-            timestamp: new Date().toISOString(),
-          },
-        });
-      }
+      console.log(`${getCurrentTimestamp()} - 🎯 MCP Client - Calling get-canada-current-weather tool via MCP Server`);
 
-      const current = weatherData.current;
-      const locationInfo = weatherData.location;
-
-      const weatherText = `🌍 ${locationInfo.name}, ${locationInfo.region}, ${locationInfo.country}
-📍 Coordinates: ${locationInfo.lat}, ${locationInfo.lon}
-🕐 Local Time: ${locationInfo.localtime}
-
-Current Weather:
-🌡️ Temperature: ${current.temp_c}°C (feels like ${current.feelslike_c}°C)
-☁️ Condition: ${current.condition.text}
-🌬️ Wind: ${current.wind_kph} km/h ${current.wind_dir}
-💧 Humidity: ${current.humidity}%
-📊 Pressure: ${current.pressure_mb} mb
-👁️ Visibility: ${current.vis_km} km
-☀️ UV Index: ${current.uv}`;
+      const weatherResult = await mcpClient.getCanadaCurrentWeather(location, province as string);
+      const weatherText = weatherResult.content?.[0]?.text || "No weather data available";
 
       console.log(
-        `${getCurrentTimestamp()} - ✅ MCP Server - Successfully processed current weather for: ${location}, ${
+        `${getCurrentTimestamp()} - ✅ MCP Server Response - Successfully processed current weather for: ${location}, ${
           province || "Canada"
         }`
       );
@@ -73,24 +40,27 @@ Current Weather:
       return res.json({
         success: true,
         data: {
-          location: `${locationInfo.name}, ${locationInfo.region}, ${locationInfo.country}`,
+          location: `${location}${province ? `, ${province}` : ""}, Canada`,
           weather: weatherText,
           timestamp: new Date().toISOString(),
           mcpInfo: {
-            serverName: "weather-api-server",
+            serverName: "weather-mcp-server",
             toolUsed: "get-canada-current-weather",
+            clientConnected: mcpClient.isConnected(),
           },
         },
       });
     } catch (mcpError) {
-      console.error(`${getCurrentTimestamp()} - ❌ MCP Server - Tool execution error:`, mcpError);
+      console.error(`${getCurrentTimestamp()} - ❌ MCP Client - Error during MCP operation:`, mcpError);
       throw mcpError;
+    } finally {
+      await mcpClient.disconnect();
     }
   } catch (error) {
-    console.error(`${getCurrentTimestamp()} - ❌ CanadianWeatherController - Error in getCurrentWeather:`, error);
+    console.error(`${getCurrentTimestamp()} - ❌ CanadianWeatherController - Error in canadaCurrentWeather:`, error);
 
     return res.status(500).json({
-      error: "Failed to retrieve Canadian current weather",
+      error: "Failed to retrieve Canadian current weather via MCP",
       details: error instanceof Error ? error.message : "Unknown error",
       success: false,
     });
@@ -98,6 +68,8 @@ Current Weather:
 };
 
 export const canadaWeatherForecast = async (req: Request, res: Response) => {
+  const mcpClient = new WeatherMCPClient();
+
   try {
     const { location, province, days } = req.query;
 
@@ -123,56 +95,18 @@ export const canadaWeatherForecast = async (req: Request, res: Response) => {
       } (${forecastDays} days)`
     );
 
-    // Simulate MCP Client-Server Pattern
-    const mcpServer = createWeatherMCPServer();
-    const client = new HTTPMCPClient();
-
     try {
-      console.log(
-        `${getCurrentTimestamp()} - 🔄 MCP Client - Calling get-canada-weather-forecast tool through MCP Server`
-      );
+      console.log(`${getCurrentTimestamp()} - 🔄 MCP Client - Establishing connection to Weather MCP Server`);
 
-      const forecastData = await getForecastCanada(location, province as string, forecastDays);
+      await mcpClient.connect();
 
-      if (!forecastData) {
-        console.log(
-          `${getCurrentTimestamp()} - ⚠️ MCP Server - No forecast data found for: ${location}, ${province || "Canada"}`
-        );
-        return res.json({
-          success: true,
-          data: {
-            location: `${location}${province ? `, ${province}` : ""}, Canada`,
-            forecast: `Failed to retrieve forecast data for: ${location}${province ? `, ${province}` : ""}, Canada`,
-            timestamp: new Date().toISOString(),
-          },
-        });
-      }
+      console.log(`${getCurrentTimestamp()} - 🎯 MCP Client - Calling get-canada-weather-forecast tool via MCP Server`);
 
-      const locationInfo = forecastData.location;
-      const forecastDaysData = forecastData.forecast?.forecastday || [];
-
-      let forecastText: string;
-      if (forecastDaysData.length === 0) {
-        forecastText = `No forecast data available for: ${location}${province ? `, ${province}` : ""}, Canada`;
-      } else {
-        const dailyForecasts = forecastDaysData
-          .map((day: any) => {
-            const dayData = day.day;
-            return `📅 ${day.date}
-🌡️ Temperature: ${dayData.mintemp_c}°C to ${dayData.maxtemp_c}°C (avg: ${dayData.avgtemp_c}°C)
-☁️ Condition: ${dayData.condition.text}
-🌬️ Max Wind: ${dayData.maxwind_kph} km/h
-🌧️ Total Precipitation: ${dayData.totalprecip_mm} mm
-💧 Avg Humidity: ${dayData.avghumidity}%
-☀️ UV Index: ${dayData.uv}`;
-          })
-          .join("\n\n");
-
-        forecastText = `Weather Forecast for ${locationInfo.name}, ${locationInfo.region}, ${locationInfo.country}:\n\n${dailyForecasts}`;
-      }
+      const forecastResult = await mcpClient.getCanadaWeatherForecast(location, province as string, forecastDays);
+      const weatherText = forecastResult.content?.[0]?.text || "No forecast data available";
 
       console.log(
-        `${getCurrentTimestamp()} - ✅ MCP Server - Successfully processed forecast for: ${location}, ${
+        `${getCurrentTimestamp()} - ✅ MCP Server Response - Successfully processed forecast for: ${location}, ${
           province || "Canada"
         }`
       );
@@ -180,25 +114,28 @@ export const canadaWeatherForecast = async (req: Request, res: Response) => {
       return res.json({
         success: true,
         data: {
-          location: `${locationInfo.name}, ${locationInfo.region}, ${locationInfo.country}`,
-          forecast: forecastText,
+          location: `${location}${province ? `, ${province}` : ""}, Canada`,
+          forecast: weatherText,
           days: forecastDays,
           timestamp: new Date().toISOString(),
           mcpInfo: {
-            serverName: "weather-api-server",
+            serverName: "weather-mcp-server",
             toolUsed: "get-canada-weather-forecast",
+            clientConnected: mcpClient.isConnected(),
           },
         },
       });
     } catch (mcpError) {
-      console.error(`${getCurrentTimestamp()} - ❌ MCP Server - Tool execution error:`, mcpError);
+      console.error(`${getCurrentTimestamp()} - ❌ MCP Client - Error during MCP operation:`, mcpError);
       throw mcpError;
+    } finally {
+      await mcpClient.disconnect();
     }
   } catch (error) {
-    console.error(`${getCurrentTimestamp()} - ❌ CanadianWeatherController - Error in getWeatherForecast:`, error);
+    console.error(`${getCurrentTimestamp()} - ❌ CanadianWeatherController - Error in canadaWeatherForecast:`, error);
 
     return res.status(500).json({
-      error: "Failed to retrieve Canadian weather forecast",
+      error: "Failed to retrieve Canadian weather forecast via MCP",
       details: error instanceof Error ? error.message : "Unknown error",
       success: false,
     });
