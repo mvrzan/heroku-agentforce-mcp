@@ -27,8 +27,10 @@ const httpServer = app.listen(PORT, () => {
   console.log(`${getCurrentTimestamp()} - 🚀 Express Server - MCP Client-Server API starting...`);
   console.log(`${getCurrentTimestamp()} - 🌐 Express Server - Server running on http://localhost:${PORT}`);
   console.log(`${getCurrentTimestamp()} - 🔌 Express Server - Available endpoints:`);
-  console.log(`  - POST /mcp/remote     - Connect to remote MCP server`);
-  console.log(`  - POST /mcp/local      - Create local MCP server`);
+  console.log(`  - GET /api/us-weather/alerts            - US weather alerts`);
+  console.log(`  - GET /api/us-weather/forecast          - US weather forecast`);
+  console.log(`  - GET /api/canada-weather/current       - Canadian current weather`);
+  console.log(`  - GET /api/canada-weather/forecast      - Canadian weather forecast`);
   console.log(`${getCurrentTimestamp()} - ✅ Express Server - Ready to accept requests`);
 });
 
