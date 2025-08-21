@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { getCurrentTimestamp } from "../utils/loggingUtil.js";
-import { HTTPMCPClient } from "../utils/HTTPMCPClient.js";
-import { createWeatherMCPServer } from "../utils/WeatherMCPServer.js";
-import { getUSWeatherAlerts, getUSWeatherForecast } from "../utils/weatherHelpers.js";
+import { WeatherMCPClient } from "../utils/WeatherMCPClient.js";
 
 export const usaWeatherAlerts = async (req: Request, res: Response) => {
+  const mcpClient = new WeatherMCPClient();
+
   try {
     const { state } = req.query;
 
@@ -17,75 +17,44 @@ export const usaWeatherAlerts = async (req: Request, res: Response) => {
 
     console.log(`${getCurrentTimestamp()} - 🚨 USWeatherController - Processing US alerts request for state: ${state}`);
 
-    // Simulate MCP Client-Server Pattern:
-    // 1. Controller acts as MCP Client
-    // 2. Weather helper functions act as MCP Server tools
-    // 3. Create MCP server instance for logging and structure
-    const mcpServer = createWeatherMCPServer();
-
-    // 4. Create MCP client instance for structure
-    const client = new HTTPMCPClient();
-
     try {
-      // Simulate MCP tool call by directly calling the weather function
-      // In a real MCP setup, this would go through the transport layer
-      console.log(`${getCurrentTimestamp()} - 🔄 MCP Client - Calling get-us-weather-alerts tool through MCP Server`);
+      console.log(`${getCurrentTimestamp()} - 🔄 MCP Client - Establishing connection to Weather MCP Server`);
 
-      const alertsData = await getUSWeatherAlerts(state.toUpperCase());
+      await mcpClient.connect();
 
-      if (!alertsData) {
-        console.log(`${getCurrentTimestamp()} - ⚠️ MCP Server - No alert data found for state: ${state}`);
-        return res.json({
-          success: true,
-          data: {
-            state: state.toUpperCase(),
-            alerts: `No active weather alerts for ${state.toUpperCase()}`,
-            timestamp: new Date().toISOString(),
-          },
-        });
-      }
+      console.log(`${getCurrentTimestamp()} - 🎯 MCP Client - Calling get-us-weather-alerts tool via MCP Server`);
 
-      const alerts = alertsData.features || [];
+      const alertsResult = await mcpClient.getUSWeatherAlerts(state);
+      const weatherText = alertsResult.content?.[0]?.text || "No alert data available";
 
-      let alertsText: string;
-      if (alerts.length === 0) {
-        alertsText = `No active weather alerts for ${state.toUpperCase()}`;
-      } else {
-        const alertMessages = alerts
-          .map((alert: any) => {
-            const props = alert.properties;
-            return `⚠️ ${props.event || "Weather Alert"}\nArea: ${props.areaDesc || "Unknown"}\nSeverity: ${
-              props.severity || "Unknown"
-            }\nStatus: ${props.status || "Unknown"}\n${props.headline || "No details available"}`;
-          })
-          .slice(0, 5);
-
-        alertsText = `Weather Alerts for ${state.toUpperCase()}:\n\n${alertMessages.join("\n\n")}`;
-      }
-
-      console.log(`${getCurrentTimestamp()} - ✅ MCP Server - Successfully processed alerts for state: ${state}`);
+      console.log(
+        `${getCurrentTimestamp()} - ✅ MCP Server Response - Successfully processed alerts for state: ${state}`
+      );
 
       return res.json({
         success: true,
         data: {
           state: state.toUpperCase(),
-          alerts: alertsText,
+          alerts: weatherText,
           timestamp: new Date().toISOString(),
           mcpInfo: {
-            serverName: "weather-api-server",
+            serverName: "weather-mcp-server",
             toolUsed: "get-us-weather-alerts",
+            clientConnected: mcpClient.isConnected(),
           },
         },
       });
     } catch (mcpError) {
-      console.error(`${getCurrentTimestamp()} - ❌ MCP Server - Tool execution error:`, mcpError);
+      console.error(`${getCurrentTimestamp()} - ❌ MCP Client - Error during MCP operation:`, mcpError);
       throw mcpError;
+    } finally {
+      await mcpClient.disconnect();
     }
   } catch (error) {
-    console.error(`${getCurrentTimestamp()} - ❌ USWeatherController - Error in getUSWeatherAlerts:`, error);
+    console.error(`${getCurrentTimestamp()} - ❌ USWeatherController - Error in usaWeatherAlerts:`, error);
 
     return res.status(500).json({
-      error: "Failed to retrieve US weather alerts",
+      error: "Failed to retrieve US weather alerts via MCP",
       details: error instanceof Error ? error.message : "Unknown error",
       success: false,
     });
@@ -93,6 +62,8 @@ export const usaWeatherAlerts = async (req: Request, res: Response) => {
 };
 
 export const usaWeatherForecast = async (req: Request, res: Response) => {
+  const mcpClient = new WeatherMCPClient();
+
   try {
     const { lat, lon } = req.query;
 
@@ -117,76 +88,44 @@ export const usaWeatherForecast = async (req: Request, res: Response) => {
       `${getCurrentTimestamp()} - 🌤️ USWeatherController - Processing US forecast request for: ${latitude}, ${longitude}`
     );
 
-    // Simulate MCP Client-Server Pattern:
-    // 1. Controller acts as MCP Client
-    // 2. Weather helper functions act as MCP Server tools
-    const mcpServer = createWeatherMCPServer();
-    const client = new HTTPMCPClient();
-
     try {
-      console.log(`${getCurrentTimestamp()} - 🔄 MCP Client - Calling get-us-weather-forecast tool through MCP Server`);
+      console.log(`${getCurrentTimestamp()} - 🔄 MCP Client - Establishing connection to Weather MCP Server`);
 
-      const forecastData = await getUSWeatherForecast(latitude, longitude);
+      await mcpClient.connect();
 
-      if (!forecastData) {
-        console.log(
-          `${getCurrentTimestamp()} - ⚠️ MCP Server - No forecast data found for coordinates: ${latitude}, ${longitude}`
-        );
-        return res.json({
-          success: true,
-          data: {
-            coordinates: { latitude, longitude },
-            forecast: `Failed to retrieve forecast data for coordinates: ${latitude}, ${longitude}. This location may not be supported by the NWS API (only US locations are supported).`,
-            timestamp: new Date().toISOString(),
-          },
-        });
-      }
+      console.log(`${getCurrentTimestamp()} - 🎯 MCP Client - Calling get-us-weather-forecast tool via MCP Server`);
 
-      const periods = forecastData.properties?.periods || [];
-
-      let forecastText: string;
-      if (periods.length === 0) {
-        forecastText = `No forecast data available for coordinates: ${latitude}, ${longitude}`;
-      } else {
-        forecastText = periods
-          .slice(0, 5)
-          .map((period: any) => {
-            return `📅 ${period.name || "Unknown"}\n🌡️ Temperature: ${period.temperature || "Unknown"}°${
-              period.temperatureUnit || "F"
-            }\n🌬️ Wind: ${period.windSpeed || "Unknown"} ${period.windDirection || ""}\n☁️ ${
-              period.shortForecast || "No forecast available"
-            }`;
-          })
-          .join("\n\n");
-
-        forecastText = `Weather Forecast for ${latitude}, ${longitude}:\n\n${forecastText}`;
-      }
+      const forecastResult = await mcpClient.getUSWeatherForecast(latitude, longitude);
+      const weatherText = forecastResult.content?.[0]?.text || "No forecast data available";
 
       console.log(
-        `${getCurrentTimestamp()} - ✅ MCP Server - Successfully processed forecast for: ${latitude}, ${longitude}`
+        `${getCurrentTimestamp()} - ✅ MCP Server Response - Successfully processed forecast for: ${latitude}, ${longitude}`
       );
 
       return res.json({
         success: true,
         data: {
           coordinates: { latitude, longitude },
-          forecast: forecastText,
+          forecast: weatherText,
           timestamp: new Date().toISOString(),
           mcpInfo: {
-            serverName: "weather-api-server",
+            serverName: "weather-mcp-server",
             toolUsed: "get-us-weather-forecast",
+            clientConnected: mcpClient.isConnected(),
           },
         },
       });
     } catch (mcpError) {
-      console.error(`${getCurrentTimestamp()} - ❌ MCP Server - Tool execution error:`, mcpError);
+      console.error(`${getCurrentTimestamp()} - ❌ MCP Client - Error during MCP operation:`, mcpError);
       throw mcpError;
+    } finally {
+      await mcpClient.disconnect();
     }
   } catch (error) {
-    console.error(`${getCurrentTimestamp()} - ❌ USWeatherController - Error in getUSWeatherForecast:`, error);
+    console.error(`${getCurrentTimestamp()} - ❌ USWeatherController - Error in usaWeatherForecast:`, error);
 
     return res.status(500).json({
-      error: "Failed to retrieve US weather forecast",
+      error: "Failed to retrieve US weather forecast via MCP",
       details: error instanceof Error ? error.message : "Unknown error",
       success: false,
     });
