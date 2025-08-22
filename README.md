@@ -452,6 +452,8 @@ In order to deploy this on Heroku, make sure you have the right `package.json` d
 4. Go to `Agentforce Assets` and create new Actions for every individual route of the External Service you have just created
 5. Navigate to the Agent of choice and create a new weather Topic and attach the newly created Actions
 
+That is it! Now you can try out your new Actions with Agentforce!
+
 ## Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)
 
 🚧 **Work in progress** 🚧
