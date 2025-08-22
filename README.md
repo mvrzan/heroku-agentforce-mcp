@@ -385,7 +385,8 @@ In order to deploy this on Heroku, make sure you have the right `package.json` d
 1. In the Salesforce setup, navigate to `Named Credentials`, click on `External Credential` and create a new External Credential
 2. In the Salesforce setup, navigate to `Named Credentials` and create a new Named Credential that points to your deployed Heroku instance and select the previously created External Credential
 3. In Salesforce setup, navigate to `External Services` and create a new External Service via the [openAPI specification](./project_3/openapi.json) and point to the Named Credential you have created in the previous step
-4.
+4. Go to `Agentforce Assets` and create new Actions for every individual route of the External Service you have just created
+5. Navigate to the Agent of choice and create a new weather Topic and attach the newly created Actions
 
 ## Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)
 
