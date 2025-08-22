@@ -39,6 +39,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
       - [Deployment](#deployment)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
     - [Technologies used](#technologies-used-2)
+    - [Salesforce configuration](#salesforce-configuration)
   - [Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-server-native-agentforce-mcp-client)
 - [License](#license)
 - [Disclaimer](#disclaimer)
@@ -359,6 +360,13 @@ This setup demonstrates how to integrate Agentforce with an MCP server(s) via He
 - [Heroku](https://www.heroku.com/)
 - [Salesforce](https://www.salesforce.com)
 - [Agentforce](https://www.salesforce.com/agentforce/)
+
+### Salesforce configuration
+
+1. In the Salesforce setup, navigate to `Named Credentials`, click on `External Credential` and create a new External Credential
+2. In the Salesforce setup, navigate to `Named Credentials` and create a new Named Credential that points to your deployed Heroku instance and select the previously created External Credential
+3. In Salesforce setup, navigate to `External Services` and create a new External Service via the [openAPI specification](./project_3/openapi.json) and point to the Named Credential you have created in the previous step
+4.
 
 ## Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)
 
