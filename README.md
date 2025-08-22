@@ -39,6 +39,11 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
       - [Deployment](#deployment)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
     - [Technologies used](#technologies-used-2)
+    - [Configuration](#configuration-2)
+      - [Requirements](#requirements-2)
+      - [Setup](#setup-2)
+          - [Local environment configuration](#local-environment-configuration-2)
+        - [Development](#development-2)
       - [Deployment](#deployment-1)
     - [Salesforce configuration](#salesforce-configuration)
   - [Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-server-native-agentforce-mcp-client)
@@ -361,6 +366,65 @@ This setup demonstrates how to integrate Agentforce with an MCP server(s) via He
 - [Heroku](https://www.heroku.com/)
 - [Salesforce](https://www.salesforce.com)
 - [Agentforce](https://www.salesforce.com/agentforce/)
+
+### Configuration
+
+#### Requirements
+
+To run this application locally, you will need the following:
+
+- Node.js version 20 or later installed (type `node -v` in your terminal to check). Follow [instructions](https://nodejs.org/en/download) if you don't have node installed
+- npm version 10.0.0 or later installed (type `npm -v` in your terminal to check). Node.js includes `npm`
+- git installed. Follow the instructions to [install git](https://git-scm.com/downloads)
+- A [Heroku account](https://signup.heroku.com/)
+- A [WeatherAPI account](https://www.weatherapi.com/) and API key
+- A [Salesforce](https://www.salesforce.com) account enabled with [Agentforce](https://www.salesforce.com/agentforce/)
+
+#### Setup
+
+###### Local environment configuration
+
+The first step is to clone the repository and install the project dependencies for the server folder via a terminal interface by running the `npm install` in the proper folder:
+
+Server:
+
+```
+cd heroku-mcp/project_3/server
+npm install
+npm run build
+```
+
+The second step is to create a `.env` file in the server folder. Find the `.env.example` file, copy it and rename it to `.env`.
+
+```
+cd heroku-mcp/project_3/server
+cp .env.example .env
+```
+
+Edit the newly created `.env` file and update the variable with your Anthropic account API key information:
+
+```
+CLIENT_ACCESS_TOKEN=example-token
+WEATHER_USER_AGENT=weather-app/1.0
+USA_WEATHER_API=https://api.weather.gov
+WEATHERAPI_URL=https://api.weatherapi.com
+WEATHERAPI_KEY=
+```
+
+Once all of this is done, you are ready to run the application locally by typing `npm run dev`!
+
+##### Development
+
+To run the application locally, use the command line, navigate to the `client` folder, ensure the dependencies are installed properly, and run the following:
+
+```
+cd heroku-mcp/project_2/client
+npm run dev
+```
+
+This will automatically run the Node script and you will be able to write prompts directly in your Command Line Interface.
+
+When you make changes to your code, the server will automatically restart to fetch new changes.
 
 #### Deployment
 
