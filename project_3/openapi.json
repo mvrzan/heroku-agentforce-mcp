@@ -1,1 +1,619 @@
-
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Weather MCP API",
+    "description": "A weather API service that uses Model Context Protocol (MCP) architecture to provide weather information for the United States and Canada. This API leverages MCP client-server communication to fetch weather alerts, forecasts, and current conditions.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/us-weather/alerts": {
+      "get": {
+        "tags": ["US Weather"],
+        "summary": "Get weather alerts for a US state",
+        "description": "Retrieves weather alerts for a specified US state using the National Weather Service API through MCP protocol communication.",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "description": "Two-letter US state code (e.g., CA, NY, TX)",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$",
+              "minLength": 2,
+              "maxLength": 2,
+              "example": "CA"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Weather alerts retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/USWeatherAlertsResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful weather alerts response",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "state": "CA",
+                        "alerts": "No active weather alerts for California at this time.",
+                        "timestamp": "2025-08-22T10:30:00.000Z",
+                        "mcpInfo": {
+                          "serverName": "weather-mcp-server",
+                          "toolUsed": "get-us-weather-alerts",
+                          "clientConnected": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid state parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalid_state": {
+                    "summary": "Invalid state code",
+                    "value": {
+                      "error": "State parameter is required and must be a 2-letter state code (e.g., CA, NY, TX)",
+                      "success": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/us-weather/forecast": {
+      "get": {
+        "tags": ["US Weather"],
+        "summary": "Get weather forecast for US coordinates",
+        "description": "Retrieves weather forecast for specified latitude and longitude coordinates within the United States using the National Weather Service API through MCP protocol communication.",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "description": "Latitude coordinate",
+            "schema": {
+              "type": "number",
+              "format": "float",
+              "minimum": -90,
+              "maximum": 90,
+              "example": 37.7749
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "description": "Longitude coordinate",
+            "schema": {
+              "type": "number",
+              "format": "float",
+              "minimum": -180,
+              "maximum": 180,
+              "example": -122.4194
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Weather forecast retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/USWeatherForecastResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful weather forecast response",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "coordinates": {
+                          "latitude": 37.7749,
+                          "longitude": -122.4194
+                        },
+                        "forecast": "Today: Partly cloudy with a high of 72°F. Tonight: Clear skies with a low of 58°F.",
+                        "timestamp": "2025-08-22T10:30:00.000Z",
+                        "mcpInfo": {
+                          "serverName": "weather-mcp-server",
+                          "toolUsed": "get-us-weather-forecast",
+                          "clientConnected": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid coordinates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missing_coordinates": {
+                    "summary": "Missing latitude or longitude",
+                    "value": {
+                      "error": "Both latitude (lat) and longitude (lon) parameters are required",
+                      "success": false
+                    }
+                  },
+                  "invalid_coordinates": {
+                    "summary": "Invalid coordinate values",
+                    "value": {
+                      "error": "Latitude and longitude must be valid numbers",
+                      "success": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/canada-weather/current": {
+      "get": {
+        "tags": ["Canadian Weather"],
+        "summary": "Get current weather for a Canadian location",
+        "description": "Retrieves current weather conditions for a specified Canadian location using the WeatherAPI service through MCP protocol communication.",
+        "parameters": [
+          {
+            "name": "location",
+            "in": "query",
+            "required": true,
+            "description": "Canadian city name (e.g., Toronto, Vancouver)",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "Toronto"
+            }
+          },
+          {
+            "name": "province",
+            "in": "query",
+            "required": false,
+            "description": "Canadian province or territory code (optional, e.g., ON, BC)",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 3,
+              "example": "ON"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current weather retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanadianCurrentWeatherResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful current weather response",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "location": "Toronto, ON, Canada",
+                        "weather": "Current temperature: 22°C (72°F). Conditions: Partly cloudy. Humidity: 65%. Wind: 15 km/h NW.",
+                        "timestamp": "2025-08-22T10:30:00.000Z",
+                        "mcpInfo": {
+                          "serverName": "weather-mcp-server",
+                          "toolUsed": "get-canada-current-weather",
+                          "clientConnected": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid location parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missing_location": {
+                    "summary": "Missing location parameter",
+                    "value": {
+                      "error": "Location parameter is required (e.g., Toronto, Vancouver)",
+                      "success": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/canada-weather/forecast": {
+      "get": {
+        "tags": ["Canadian Weather"],
+        "summary": "Get weather forecast for a Canadian location",
+        "description": "Retrieves weather forecast for a specified Canadian location using the WeatherAPI service through MCP protocol communication. Supports 1-3 day forecasts.",
+        "parameters": [
+          {
+            "name": "location",
+            "in": "query",
+            "required": true,
+            "description": "Canadian city name (e.g., Toronto, Vancouver)",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "Vancouver"
+            }
+          },
+          {
+            "name": "province",
+            "in": "query",
+            "required": false,
+            "description": "Canadian province or territory code (optional, e.g., ON, BC)",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 3,
+              "example": "BC"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of forecast days (1-3, default: 3)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3,
+              "default": 3,
+              "example": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Weather forecast retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanadianForecastWeatherResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful weather forecast response",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "location": "Vancouver, BC, Canada",
+                        "forecast": "Day 1: Partly cloudy, high 18°C, low 12°C. Day 2: Light rain, high 16°C, low 10°C. Day 3: Sunny, high 20°C, low 14°C.",
+                        "days": 3,
+                        "timestamp": "2025-08-22T10:30:00.000Z",
+                        "mcpInfo": {
+                          "serverName": "weather-mcp-server",
+                          "toolUsed": "get-canada-weather-forecast",
+                          "clientConnected": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missing_location": {
+                    "summary": "Missing location parameter",
+                    "value": {
+                      "error": "Location parameter is required (e.g., Toronto, Vancouver)",
+                      "success": false
+                    }
+                  },
+                  "invalid_days": {
+                    "summary": "Invalid days parameter",
+                    "value": {
+                      "error": "Days parameter must be a number between 1 and 3",
+                      "success": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MCPInfo": {
+        "type": "object",
+        "properties": {
+          "serverName": {
+            "type": "string",
+            "description": "Name of the MCP server used",
+            "example": "weather-mcp-server"
+          },
+          "toolUsed": {
+            "type": "string",
+            "description": "MCP tool that was invoked",
+            "example": "get-us-weather-alerts"
+          },
+          "clientConnected": {
+            "type": "boolean",
+            "description": "Whether the MCP client connection was successful",
+            "example": true
+          }
+        },
+        "required": ["serverName", "toolUsed", "clientConnected"]
+      },
+      "Coordinates": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "float",
+            "description": "Latitude coordinate",
+            "example": 37.7749
+          },
+          "longitude": {
+            "type": "number",
+            "format": "float",
+            "description": "Longitude coordinate",
+            "example": -122.4194
+          }
+        },
+        "required": ["latitude", "longitude"]
+      },
+      "USWeatherAlertsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "description": "US state code (uppercase)",
+                "example": "CA"
+              },
+              "alerts": {
+                "type": "string",
+                "description": "Weather alerts information or message",
+                "example": "No active weather alerts for California at this time."
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO timestamp of the response",
+                "example": "2025-08-22T10:30:00.000Z"
+              },
+              "mcpInfo": {
+                "$ref": "#/components/schemas/MCPInfo"
+              }
+            },
+            "required": ["state", "alerts", "timestamp", "mcpInfo"]
+          }
+        },
+        "required": ["success", "data"]
+      },
+      "USWeatherForecastResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "coordinates": {
+                "$ref": "#/components/schemas/Coordinates"
+              },
+              "forecast": {
+                "type": "string",
+                "description": "Weather forecast information",
+                "example": "Today: Partly cloudy with a high of 72°F. Tonight: Clear skies with a low of 58°F."
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO timestamp of the response",
+                "example": "2025-08-22T10:30:00.000Z"
+              },
+              "mcpInfo": {
+                "$ref": "#/components/schemas/MCPInfo"
+              }
+            },
+            "required": ["coordinates", "forecast", "timestamp", "mcpInfo"]
+          }
+        },
+        "required": ["success", "data"]
+      },
+      "CanadianCurrentWeatherResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "Full location string including country",
+                "example": "Toronto, ON, Canada"
+              },
+              "weather": {
+                "type": "string",
+                "description": "Current weather information",
+                "example": "Current temperature: 22°C (72°F). Conditions: Partly cloudy. Humidity: 65%. Wind: 15 km/h NW."
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO timestamp of the response",
+                "example": "2025-08-22T10:30:00.000Z"
+              },
+              "mcpInfo": {
+                "$ref": "#/components/schemas/MCPInfo"
+              }
+            },
+            "required": ["location", "weather", "timestamp", "mcpInfo"]
+          }
+        },
+        "required": ["success", "data"]
+      },
+      "CanadianForecastWeatherResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "Full location string including country",
+                "example": "Vancouver, BC, Canada"
+              },
+              "forecast": {
+                "type": "string",
+                "description": "Weather forecast information",
+                "example": "Day 1: Partly cloudy, high 18°C, low 12°C. Day 2: Light rain, high 16°C, low 10°C. Day 3: Sunny, high 20°C, low 14°C."
+              },
+              "days": {
+                "type": "integer",
+                "description": "Number of forecast days",
+                "example": 3
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO timestamp of the response",
+                "example": "2025-08-22T10:30:00.000Z"
+              },
+              "mcpInfo": {
+                "$ref": "#/components/schemas/MCPInfo"
+              }
+            },
+            "required": ["location", "forecast", "days", "timestamp", "mcpInfo"]
+          }
+        },
+        "required": ["success", "data"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message describing what went wrong",
+            "example": "State parameter is required and must be a 2-letter state code (e.g., CA, NY, TX)"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Always false for error responses",
+            "example": false
+          },
+          "details": {
+            "type": "string",
+            "description": "Additional error details (optional)",
+            "example": "Connection timeout while communicating with weather service"
+          }
+        },
+        "required": ["error", "success"]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "US Weather",
+      "description": "Weather services for United States locations using the National Weather Service API"
+    },
+    {
+      "name": "Canadian Weather",
+      "description": "Weather services for Canadian locations using the WeatherAPI service"
+    }
+  ]
+}
