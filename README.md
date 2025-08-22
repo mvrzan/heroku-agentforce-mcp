@@ -39,6 +39,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
       - [Deployment](#deployment)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
     - [Technologies used](#technologies-used-2)
+      - [Deployment](#deployment-1)
     - [Salesforce configuration](#salesforce-configuration)
   - [Project 4: Agentforce and Heroku MCP Server (native Agentforce MCP client)](#project-4-agentforce-and-heroku-mcp-server-native-agentforce-mcp-client)
 - [License](#license)
@@ -360,6 +361,24 @@ This setup demonstrates how to integrate Agentforce with an MCP server(s) via He
 - [Heroku](https://www.heroku.com/)
 - [Salesforce](https://www.salesforce.com)
 - [Agentforce](https://www.salesforce.com/agentforce/)
+
+#### Deployment
+
+Once you are happy with your application, you can deploy it to Heroku!
+
+To deploy the application to Heroku, please follow the [official instructions](https://devcenter.heroku.com/articles/git).
+
+> NOTE: If you want to deploy this application to Heroku, you will have to create all of the above variables as Heroku environment variables. This can be done via the [command line or the Heroku Dashboard UI](https://devcenter.heroku.com/articles/config-vars).
+
+In order to deploy this on Heroku, make sure you have the right `package.json` deployment script in the repository root folder:
+
+```
+{
+  "scripts": {
+    "start": "cd project_3/server && npm install && npm run build && npm run start"
+  }
+}
+```
 
 ### Salesforce configuration
 
