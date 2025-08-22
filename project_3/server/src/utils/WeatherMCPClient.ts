@@ -31,6 +31,7 @@ export class WeatherMCPClient {
     this.transport = new StdioClientTransport({
       command: "node",
       args: [serverPath],
+      env: process.env as Record<string, string>,
     });
   }
 
