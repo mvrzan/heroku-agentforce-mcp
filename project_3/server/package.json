@@ -7,9 +7,9 @@
     "weather": "./build/index.js"
   },
   "scripts": {
-    "dev": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\" && tsx src/index.ts",
+    "dev": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\" && node -e \"require('fs').chmodSync('build/utils/standaloneMCPServer.js', '755')\" && tsx src/index.ts",
     "watch": "tsc --watch",
-    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\" && node -e \"require('fs').chmodSync('build/utils/standaloneMCPServer.js', '755')\"",
     "start": "tsx src/index.ts",
     "inspector": "npx @modelcontextprotocol/inspector node build/index.js"
   },
