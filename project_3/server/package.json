@@ -22,15 +22,14 @@
   "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "tsx": "^4.20.4",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
-    "zod": "^3.22.4",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.3.0"
-  },
-  "devDependencies": {}
+    "zod": "^3.22.4"
+  }
 }
