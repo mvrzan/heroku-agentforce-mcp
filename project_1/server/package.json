@@ -20,12 +20,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.2",
-    "tsx": "^4.20.4",
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "tsx": "^4.20.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^24.2.1",
+    "@types/node": "^24.3.0",
     "typescript": "^5.9.2"
   }
 }
