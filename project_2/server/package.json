@@ -21,11 +21,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.3",
+    "@modelcontextprotocol/sdk": "^1.17.4",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "tsx": "^4.20.4",
+    "tsx": "^4.20.5",
     "zod": "^3.22.4"
   },
   "devDependencies": {
