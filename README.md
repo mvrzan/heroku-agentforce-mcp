@@ -453,7 +453,7 @@ That is it! Now you can try out your new Actions with Agentforce!
 
 🚧 **Work in progress** 🚧
 
-At the time of creating this repository, the native Agentforce MCP client was not globally available.
+At the time of creating this repository, the native Agentforce MCP client was not globally available. Stay tuned for updates!
 
 # License
 
