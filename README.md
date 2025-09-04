@@ -8,7 +8,7 @@
 
 # Exploring Model Context Protocol (MCP) with Heroku and Agentforce
 
-The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. This projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents including Agentforce. This repository has 3 projects:
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) seems to be everywhere these days. These projects showcases some of the inner workings of the MCP and architectural patterns when integrating with various Agents including Agentforce. This repository has 3 projects:
 
 1. A CLI tool with a local MCP Client and local MCP Server
 2. A CLI tool with a local MCP Client and two remote MCP Servers hosted on Heroku
@@ -26,14 +26,14 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
     - [Configuration](#configuration)
       - [Requirements](#requirements)
       - [Setup](#setup)
-          - [Local environment configuration](#local-environment-configuration)
+        - [Local environment configuration](#local-environment-configuration)
         - [Development](#development)
   - [Project 2: Local MCP Client and Heroku MCP Server](#project-2-local-mcp-client-and-heroku-mcp-server)
     - [Technologies used](#technologies-used-1)
     - [Configuration](#configuration-1)
       - [Requirements](#requirements-1)
       - [Setup](#setup-1)
-          - [Local environment configuration](#local-environment-configuration-1)
+        - [Local environment configuration](#local-environment-configuration-1)
         - [Development](#development-1)
       - [Deployment](#deployment)
   - [Project 3: Agentforce and Heroku MCP Server integration (pre-native Agentforce MCP client)](#project-3-agentforce-and-heroku-mcp-server-integration-pre-native-agentforce-mcp-client)
@@ -41,7 +41,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
     - [Configuration](#configuration-2)
       - [Requirements](#requirements-2)
       - [Setup](#setup-2)
-          - [Local environment configuration](#local-environment-configuration-2)
+        - [Local environment configuration](#local-environment-configuration-2)
         - [Development](#development-2)
       - [Deployment](#deployment-1)
     - [Salesforce configuration](#salesforce-configuration)
